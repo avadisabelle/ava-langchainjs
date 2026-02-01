@@ -1,5 +1,5 @@
 {
-  "name": "narrative-tracing",
+  "name": "ava-langchain-narrative-tracing",
   "version": "0.1.0",
   "description": "Narrative Tracing for LangChain.js - Langfuse-based observability for the Narrative Intelligence Stack",
   "type": "module",
