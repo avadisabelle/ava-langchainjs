@@ -1,0 +1,76 @@
+{
+  "name": "@langchain/narrative-tracing",
+  "version": "0.1.0",
+  "description": "Narrative Tracing for LangChain.js - Langfuse-based observability for the Narrative Intelligence Stack",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.js",
+      "require": "./dist/adapters/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avadisabelle/ava-langchainjs.git",
+    "directory": "libs/narrative-tracing"
+  },
+  "keywords": [
+    "langchain",
+    "narrative",
+    "tracing",
+    "langfuse",
+    "observability",
+    "storytelling"
+  ],
+  "author": "ava",
+  "license": "MIT",
+  "dependencies": {
+    "uuid": "^9.0.0"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.2.0",
+    "langfuse": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@langchain/core": {
+      "optional": true
+    },
+    "langfuse": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@langchain/core": "^0.3.0",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "eslint": "^8.0.0",
+    "langfuse": "^3.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
