@@ -48,13 +48,18 @@
   "author": "ava",
   "license": "MIT",
   "dependencies": {
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "zod": "^3.23.0"
   },
   "peerDependencies": {
-    "ava-langchain-relational-intelligence": ">=0.1.0"
+    "ava-langchain-relational-intelligence": ">=0.1.0",
+    "@langchain/core": ">=0.2.0"
   },
   "peerDependenciesMeta": {
     "ava-langchain-relational-intelligence": {
+      "optional": true
+    },
+    "@langchain/core": {
       "optional": true
     }
   },
@@ -64,6 +69,7 @@
     "eslint": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^1.0.0",
+    "@langchain/core": "^0.3.0"
   }
 }

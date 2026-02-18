@@ -11,6 +11,8 @@
  */
 
 import { v4 as uuid } from "uuid";
+import { BaseChatModel, BaseLLM } from "@langchain/core/language_models/base";
+import { z } from "zod";
 
 // =============================================================================
 // Types
@@ -79,26 +81,77 @@ const URGENCY_KEYWORDS: Record<Urgency, string[]> = {
 // IntentExtractor
 // =============================================================================
 
+// Zod schema for LLM output validation
+const SecondaryIntentSchema = z.object({
+  action: z.string().describe("The primary verb or action from the prompt. Must be one of: create, modify, investigate, add, remove, test, deploy, manage, use, draft."),
+  target: z.string().describe("The object or goal of the action."),
+  implicit: z.boolean().describe("True if this intent was implied rather than explicitly stated. Defaults to false."),
+  dependency: z.string().nullable().describe("The ID of another secondary intent that this intent depends on. Set to null if no dependency is found."),
+  confidence: z.number().min(0).max(1).describe("Confidence score (0-1) that this intent is correct and actionable."),
+  id: z.string().optional().describe("Unique identifier for this intent."),
+});
+
+const IntentExtractionResultSchema = z.object({
+  primary: z.object({
+    action: z.string().describe("The primary verb or action for the main goal. Must be one of: create, modify, investigate, add, remove, test, deploy, manage, use, draft."),
+    target: z.string().describe("The object or goal of the main action."),
+    urgency: z.nativeEnum(Urgency).describe("The detected urgency of the primary intent. One of: immediate, session, sprint, ongoing."),
+    confidence: z.number().min(0).max(1).describe("Confidence score (0-1) in the primary intent."),
+  }),
+  secondary: z.array(SecondaryIntentSchema).describe("A list of secondary, detailed intents extracted from the prompt, each with a unique ID."),
+  context: z.object({
+    filesNeeded: z.array(z.string()).describe("List of file paths or references mentioned in the prompt (e.g., /src/file.ts, @package/module)."),
+    toolsRequired: z.array(z.string()).describe("List of tools or external systems mentioned as required (e.g., 'git', 'docker', 'npm')."),
+    assumptions: z.array(z.string()).describe("List of assumptions made or explicit assumptions stated in the prompt."),
+  }),
+});
+
 export interface ExtractorOptions {
   extractImplicit?: boolean; // Default true
   mapDependencies?: boolean; // Default true
+  llm?: BaseChatModel | BaseLLM; // Optional LLM for enhanced extraction
 }
 
 export class IntentExtractor {
   private readonly extractImplicit: boolean;
   private readonly mapDependencies: boolean;
+  private readonly llm?: BaseChatModel | BaseLLM;
 
   constructor(options?: ExtractorOptions) {
     this.extractImplicit = options?.extractImplicit ?? true;
     this.mapDependencies = options?.mapDependencies ?? true;
+    this.llm = options?.llm;
   }
 
   /**
    * Extract intents from a prompt.
    * Returns a structured result with primary + secondary intents.
    */
-  extract(prompt: string): IntentExtractionResult {
+  async extract(prompt: string): Promise<IntentExtractionResult> {
     const id = uuid();
+    const timestamp = new Date().toISOString();
+    const context = this.extractContext(prompt);
+
+    if (this.llm) {
+      try {
+        const llmResult = await this._extractIntentsWithLLM(prompt);
+        // Ensure IDs are generated for secondary intents if missing
+        llmResult.secondary.forEach((s) => {
+          if (!s.id) {
+            s.id = uuid();
+          }
+          // Also ensure action is one of the valid ACTION_VERBS categories
+          if (!Object.keys(ACTION_VERBS).includes(s.action)) {
+            s.action = "investigate"; // Fallback to a safe default
+          }
+        });
+        return { id, timestamp, prompt, context, ...llmResult };
+      } catch (e) {
+        console.warn("LLM intent extraction failed, falling back to heuristics:", e);
+        // Fallback to heuristic-based extraction on LLM failure
+      }
+    }
+
     const sentences = this.splitSentences(prompt);
     const rawIntents = this.extractRawIntents(sentences);
 
@@ -108,12 +161,9 @@ export class IntentExtractor {
     // Remaining become secondary, with dependency mapping
     const secondary = this.buildSecondaryIntents(rawIntents);
 
-    // Extract context
-    const context = this.extractContext(prompt);
-
     return {
       id,
-      timestamp: new Date().toISOString(),
+      timestamp,
       prompt,
       primary,
       secondary,
@@ -124,6 +174,57 @@ export class IntentExtractor {
   // ---------------------------------------------------------------------------
   // Internal
   // ---------------------------------------------------------------------------
+
+  private async _extractIntentsWithLLM(prompt: string): Promise<z.infer<typeof IntentExtractionResultSchema>> {
+    if (!this.llm) {
+      throw new Error("LLM not provided for LLM-based extraction.");
+    }
+
+    const systemPrompt = `You are an expert software engineer assistant specializing in breaking down complex user prompts into structured, actionable intents.
+Your goal is to extract a primary intent, a list of secondary intents (sub-tasks), and relevant context (files, tools, assumptions).
+Each intent should have an action (one of: ${Object.keys(ACTION_VERBS).join(", ")}), a target, a confidence score (0-1), and an optional dependency on another secondary intent by its ID.
+Also identify if an intent is implicit (implied but not explicitly stated).
+Assign a unique ID (UUID) to each secondary intent.
+Determine the overall urgency of the primary intent.
+
+Think step-by-step:
+1. Identify the main goal or objective (Primary Intent).
+2. Break down the main goal into smaller, discrete tasks (Secondary Intents).
+3. For each secondary intent, identify its action, target, and estimate a confidence score.
+4. Look for implicit tasks (e.g., "ensure quality" implies "test").
+5. Determine if any secondary intents depend on others.
+6. Extract any mentioned file paths, tool requirements, or explicit assumptions.
+7. Return the result in a JSON format matching the following Zod schema:
+
+${IntentExtractionResultSchema.partial().passthrough()._getCssInJs().join("\n")}
+
+Ensure the JSON is perfectly valid and can be directly parsed. Do not include any additional text outside the JSON object.
+`;
+
+    const response = await this.llm.invoke([
+      ["system", systemPrompt],
+      ["human", prompt],
+    ]);
+
+    const content = typeof response === "string" ? response : response.content;
+
+    let parsedResult;
+    try {
+      parsedResult = JSON.parse(content);
+    } catch (e) {
+      console.error("Failed to parse LLM response as JSON:", e);
+      console.error("LLM response content:", content);
+      throw new Error("LLM output was not valid JSON.");
+    }
+
+    const validationResult = IntentExtractionResultSchema.safeParse(parsedResult);
+    if (!validationResult.success) {
+      console.error("LLM output did not match schema:", validationResult.error);
+      throw new Error("LLM output did not match expected schema.");
+    }
+
+    return validationResult.data;
+  }
 
   private splitSentences(text: string): string[] {
     return text
@@ -165,7 +266,7 @@ export class IntentExtractor {
         // Extract target: everything after the action verb
         const verbIdx = lower.indexOf(bestAction);
         const afterVerb = sentence.substring(verbIdx + bestAction.length).trim();
-        const target = afterVerb.replace(/^(the|a|an|this|that|our|your)\s+/i, "").trim();
+        const target = afterVerb.replace(/^(the|a|an|this|that|our|your)\s+/i, "",).trim();
 
         intents.push({
           action: bestCategory,
