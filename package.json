@@ -3,10 +3,10 @@
   "author": "LangChain",
   "license": "MIT",
   "private": true,
-  "homepage": "https://github.com/langchain-ai/langchainjs/tree/main/",
+  "homepage": "https://github.com/avadisabelle/ava-langchainjs/tree/main/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/langchain-ai/langchainjs.git"
+    "url": "https://github.com/avadisabelle/ava-langchainjs.git"
   },
   "packageManager": "pnpm@10.14.0",
   "scripts": {
