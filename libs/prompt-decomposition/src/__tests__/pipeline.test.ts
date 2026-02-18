@@ -15,10 +15,10 @@ describe("ActionStackBuilder", () => {
   const extractor = new IntentExtractor();
   const mapper = new DependencyMapper();
 
-  it("should build a complete DecompositionResult", () => {
+  it("should build a complete DecompositionResult", async () => {
     const prompt = "Research the existing patterns. Build the new module. Test the integration.";
     const directions = decomposer.decompose(prompt);
-    const intents = extractor.extract(prompt);
+    const intents = await extractor.extract(prompt);
     const graph = mapper.buildGraph(intents.secondary);
     const order = mapper.computeExecutionOrder(graph);
     const result = builder.build(directions, intents, order);
@@ -29,10 +29,10 @@ describe("ActionStackBuilder", () => {
     expect(result.directions).toBeDefined();
   });
 
-  it("should produce valid JSON output", () => {
+  it("should produce valid JSON output", async () => {
     const prompt = "Create a package and deploy it.";
     const directions = decomposer.decompose(prompt);
-    const intents = extractor.extract(prompt);
+    const intents = await extractor.extract(prompt);
     const result = builder.build(directions, intents);
 
     const json = builder.toJSON(result);
@@ -41,10 +41,10 @@ describe("ActionStackBuilder", () => {
     expect(parsed.result.primary.action).toBe(result.primary.action);
   });
 
-  it("should produce valid Markdown output", () => {
+  it("should produce valid Markdown output", async () => {
     const prompt = "Research. Build. Test. Vision.";
     const directions = decomposer.decompose(prompt);
-    const intents = extractor.extract(prompt);
+    const intents = await extractor.extract(prompt);
     const result = builder.build(directions, intents);
 
     const md = builder.toMarkdown(result);
@@ -52,21 +52,21 @@ describe("ActionStackBuilder", () => {
     expect(md).toContain("Action Stack");
   });
 
-  it("should detect ambiguities for low confidence", () => {
+  it("should detect ambiguities for low confidence", async () => {
     const prompt = "Maybe possibly do something.";
     const directions = decomposer.decompose(prompt);
-    const intents = extractor.extract(prompt);
+    const intents = await extractor.extract(prompt);
     const result = builder.build(directions, intents);
 
     // May have ambiguities about low confidence or neglected directions
     expect(result.ambiguities).toBeDefined();
   });
 
-  it("should respect maxItems option", () => {
+  it("should respect maxItems option", async () => {
     const builder = new ActionStackBuilder({ maxItems: 2 });
     const prompt = "Create A. Build B. Test C. Deploy D. Research E.";
     const directions = decomposer.decompose(prompt);
-    const intents = extractor.extract(prompt);
+    const intents = await extractor.extract(prompt);
     const result = builder.build(directions, intents);
 
     expect(result.actionStack.length).toBeLessThanOrEqual(2);
@@ -106,8 +106,8 @@ describe("MedicineWheelBridge", () => {
 });
 
 describe("decompose (full pipeline)", () => {
-  it("should run the complete pipeline", () => {
-    const result = decompose(
+  it("should run the complete pipeline", async () => {
+    const result = await decompose(
       "Investigate the existing codebase patterns. Design a new relational intelligence module. Build and test the implementation. Ensure ceremonial protocols are respected."
     );
 
@@ -118,8 +118,8 @@ describe("decompose (full pipeline)", () => {
     expect(result.decomposition.actionStack.length).toBeGreaterThan(0);
   });
 
-  it("should produce parseable JSON", () => {
-    const result = decompose("Create a knowledge graph with ceremony.");
+  it("should produce parseable JSON", async () => {
+    const result = await decompose("Create a knowledge graph with ceremony.");
     const parsed = JSON.parse(result.json);
     expect(parsed.id).toBeDefined();
     expect(parsed.result).toBeDefined();

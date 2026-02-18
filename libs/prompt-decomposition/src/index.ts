@@ -159,7 +159,7 @@ export interface PipelineResult {
  * Run the full PDE pipeline on a prompt.
  * Decomposes → Extracts → Maps → Builds → Enriches
  */
-export function decompose(prompt: string, options?: PipelineOptions): PipelineResult {
+export async function decompose(prompt: string, options?: PipelineOptions): Promise<PipelineResult> {
   const decomposer = new DirectionalDecomposer(options?.decomposer);
   const extractor = new IntentExtractor(options?.extractor);
   const mapper = new DependencyMapper();
@@ -167,7 +167,7 @@ export function decompose(prompt: string, options?: PipelineOptions): PipelineRe
   const bridge = new MedicineWheelBridge(options?.wheelBridge);
 
   const directionalAnalysis = decomposer.decompose(prompt);
-  const intentResult = extractor.extract(prompt);
+  const intentResult = await extractor.extract(prompt);
   const graph = mapper.buildGraph(intentResult.secondary);
   const order = mapper.computeExecutionOrder(graph);
   const decomposition = builder.build(directionalAnalysis, intentResult, order);

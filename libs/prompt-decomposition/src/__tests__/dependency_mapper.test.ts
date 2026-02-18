@@ -7,8 +7,8 @@ describe("DependencyMapper", () => {
   const extractor = new IntentExtractor();
 
   describe("buildGraph", () => {
-    it("should build a graph from intents", () => {
-      const result = extractor.extract(
+    it("should build a graph from intents", async () => {
+      const result = await extractor.extract(
         "Research the patterns. Build the implementation. Test the results."
       );
       const graph = mapper.buildGraph(result.secondary);
@@ -16,24 +16,24 @@ describe("DependencyMapper", () => {
       expect(graph.nodes.size).toBeGreaterThan(0);
     });
 
-    it("should identify root nodes (no dependencies)", () => {
-      const result = extractor.extract(
+    it("should identify root nodes (no dependencies)", async () => {
+      const result = await extractor.extract(
         "Investigate the codebase. Create the module."
       );
       const graph = mapper.buildGraph(result.secondary);
       expect(graph.roots.length).toBeGreaterThan(0);
     });
 
-    it("should detect no cycles in simple graphs", () => {
-      const result = extractor.extract(
+    it("should detect no cycles in simple graphs", async () => {
+      const result = await extractor.extract(
         "Research first. Build second. Test third."
       );
       const graph = mapper.buildGraph(result.secondary);
       expect(graph.hasCycle).toBe(false);
     });
 
-    it("should calculate depths", () => {
-      const result = extractor.extract(
+    it("should calculate depths", async () => {
+      const result = await extractor.extract(
         "Research the patterns. Build the implementation."
       );
       const graph = mapper.buildGraph(result.secondary);
@@ -45,8 +45,8 @@ describe("DependencyMapper", () => {
   });
 
   describe("computeExecutionOrder", () => {
-    it("should produce execution layers", () => {
-      const result = extractor.extract(
+    it("should produce execution layers", async () => {
+      const result = await extractor.extract(
         "Investigate the code. Create the module. Test the module."
       );
       const graph = mapper.buildGraph(result.secondary);
@@ -56,8 +56,8 @@ describe("DependencyMapper", () => {
       expect(order.totalSteps).toBeGreaterThan(0);
     });
 
-    it("should place independent tasks in parallel layers", () => {
-      const result = extractor.extract(
+    it("should place independent tasks in parallel layers", async () => {
+      const result = await extractor.extract(
         "Research topic A. Research topic B. Research topic C."
       );
       const graph = mapper.buildGraph(result.secondary);
@@ -67,8 +67,8 @@ describe("DependencyMapper", () => {
       expect(order.layers[0].length).toBeGreaterThanOrEqual(2);
     });
 
-    it("should compute critical path", () => {
-      const result = extractor.extract(
+    it("should compute critical path", async () => {
+      const result = await extractor.extract(
         "Research the topic. Build the code. Test the code. Deploy the code."
       );
       const graph = mapper.buildGraph(result.secondary);
