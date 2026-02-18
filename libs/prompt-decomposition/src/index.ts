@@ -132,6 +132,18 @@ export {
 } from "./v0_ontology_bridge.js";
 
 // =============================================================================
+// LangChain Runnable Wrappers (Chain Composability)
+// =============================================================================
+
+export {
+  RunnableDecomposer,
+  RunnableDirectionalAnalyzer,
+  RunnableWheelGate,
+  RunnableDecomposerOptions,
+  RunnableDecomposerResult,
+} from "./runnable.js";
+
+// =============================================================================
 // Convenience: Full Pipeline
 // =============================================================================
 

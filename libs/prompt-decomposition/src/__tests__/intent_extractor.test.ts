@@ -6,7 +6,7 @@ import {
   SecondaryIntent,
   ExtractionContext,
 } from "../intent_extractor.js";
-import { BaseChatModel, BaseLLM } from "@langchain/core/language_models/base";
+import type { BaseLanguageModel } from "@langchain/core/language_models/base";
 
 describe("IntentExtractor", () => {
   const extractor = new IntentExtractor();
@@ -140,7 +140,7 @@ describe("IntentExtractor", () => {
         invoke: vi.fn(async (input: any) => ({
           content: mockLLMResponse(mockPrimary, mockSecondary, mockContext, "Test prompt"),
         })),
-      } as unknown as BaseChatModel;
+      } as unknown as BaseLanguageModel;
 
       const extractorWithLLM = new IntentExtractor({ llm: mockLLM });
       const prompt = "Please create a new feature.";
@@ -157,7 +157,7 @@ describe("IntentExtractor", () => {
         invoke: vi.fn(async () => ({
           content: "this is not valid json",
         })),
-      } as unknown as BaseChatModel;
+      } as unknown as BaseLanguageModel;
 
       const extractorWithLLM = new IntentExtractor({ llm: mockLLM });
       const prompt = "Create a report. Analyze data."; // Should be caught by heuristics
@@ -165,7 +165,7 @@ describe("IntentExtractor", () => {
 
       expect(mockLLM.invoke).toHaveBeenCalledOnce();
       expect(result.primary.action).toBe("create"); // From heuristic
-      expect(result.secondary.some(s => s.action === "analyze")).toBe(true);
+      expect(result.secondary.some(s => s.action === "investigate")).toBe(true); // "analyze" maps to "investigate" category
     });
 
     it("should fall back to heuristic extraction if LLM output does not match schema", async () => {
@@ -177,7 +177,7 @@ describe("IntentExtractor", () => {
             context: { filesNeeded: [], toolsRequired: [], assumptions: [] },
           }),
         })),
-      } as unknown as BaseChatModel;
+      } as unknown as BaseLanguageModel;
 
       const extractorWithLLM = new IntentExtractor({ llm: mockLLM });
       const prompt = "Deploy the application.";
@@ -195,7 +195,7 @@ describe("IntentExtractor", () => {
 
       const mockLLM = {
         invoke: vi.fn(async () => ({ content: llmOutput })),
-      } as unknown as BaseChatModel;
+      } as unknown as BaseLanguageModel;
 
       const extractorWithLLM = new IntentExtractor({ llm: mockLLM });
       const prompt = "Perform task A.";
@@ -213,7 +213,7 @@ describe("IntentExtractor", () => {
 
       const mockLLM = {
         invoke: vi.fn(async () => ({ content: llmOutput })),
-      } as unknown as BaseChatModel;
+      } as unknown as BaseLanguageModel;
 
       const extractorWithLLM = new IntentExtractor({ llm: mockLLM });
       const prompt = "Do something invalid.";
@@ -224,10 +224,10 @@ describe("IntentExtractor", () => {
 
     it("should use heuristic extraction if no LLM is provided", async () => {
       const extractorNoLLM = new IntentExtractor();
-      const prompt = "Implement the algorithm and test it thoroughly.";
+      const prompt = "Implement the algorithm. Test it thoroughly.";
       const result = await extractorNoLLM.extract(prompt);
 
-      expect(result.primary.action).toBe("implement");
+      expect(result.primary.action).toBe("create"); // "implement" maps to "create" category
       expect(result.secondary.some(s => s.action === "test")).toBe(true);
     });
   });

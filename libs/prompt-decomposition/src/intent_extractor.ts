@@ -11,7 +11,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { BaseChatModel, BaseLLM } from "@langchain/core/language_models/base";
+import type { BaseLanguageModel } from "@langchain/core/language_models/base";
 import { z } from "zod";
 
 // =============================================================================
@@ -58,7 +58,7 @@ export interface ExtractionContext {
 
 // Action verb categories for classification
 const ACTION_VERBS: Record<string, string[]> = {
-  create: ["create", "build", "make", "generate", "write", "develop", "design", "scaffold", "initialize", "init"],
+  create: ["create", "build", "make", "generate", "write", "develop", "design", "scaffold", "initialize", "init", "implement"],
   modify: ["modify", "update", "change", "edit", "adjust", "refactor", "rename", "move", "restructure"],
   investigate: ["investigate", "research", "explore", "understand", "learn", "study", "analyze", "examine", "look", "check", "review", "see"],
   add: ["add", "install", "include", "import", "integrate", "connect", "wire", "attach", "link"],
@@ -109,13 +109,13 @@ const IntentExtractionResultSchema = z.object({
 export interface ExtractorOptions {
   extractImplicit?: boolean; // Default true
   mapDependencies?: boolean; // Default true
-  llm?: BaseChatModel | BaseLLM; // Optional LLM for enhanced extraction
+  llm?: BaseLanguageModel; // Optional LLM for enhanced extraction
 }
 
 export class IntentExtractor {
   private readonly extractImplicit: boolean;
   private readonly mapDependencies: boolean;
-  private readonly llm?: BaseChatModel | BaseLLM;
+  private readonly llm?: BaseLanguageModel;
 
   constructor(options?: ExtractorOptions) {
     this.extractImplicit = options?.extractImplicit ?? true;
@@ -145,7 +145,14 @@ export class IntentExtractor {
             s.action = "investigate"; // Fallback to a safe default
           }
         });
-        return { id, timestamp, prompt, context, ...llmResult };
+        return {
+          id,
+          timestamp,
+          prompt,
+          primary: llmResult.primary,
+          secondary: llmResult.secondary as SecondaryIntent[],
+          context: llmResult.context ?? context,
+        };
       } catch (e) {
         console.warn("LLM intent extraction failed, falling back to heuristics:", e);
         // Fallback to heuristic-based extraction on LLM failure
@@ -180,6 +187,12 @@ export class IntentExtractor {
       throw new Error("LLM not provided for LLM-based extraction.");
     }
 
+    const schemaDescription = JSON.stringify({
+      primary: { action: "string (one of action verbs)", target: "string", urgency: "immediate|session|sprint|ongoing", confidence: "number 0-1" },
+      secondary: [{ id: "uuid", action: "string", target: "string", implicit: "boolean", dependency: "string|null", confidence: "number 0-1" }],
+      context: { filesNeeded: ["string"], toolsRequired: ["string"], assumptions: ["string"] },
+    }, null, 2);
+
     const systemPrompt = `You are an expert software engineer assistant specializing in breaking down complex user prompts into structured, actionable intents.
 Your goal is to extract a primary intent, a list of secondary intents (sub-tasks), and relevant context (files, tools, assumptions).
 Each intent should have an action (one of: ${Object.keys(ACTION_VERBS).join(", ")}), a target, a confidence score (0-1), and an optional dependency on another secondary intent by its ID.
@@ -194,19 +207,23 @@ Think step-by-step:
 4. Look for implicit tasks (e.g., "ensure quality" implies "test").
 5. Determine if any secondary intents depend on others.
 6. Extract any mentioned file paths, tool requirements, or explicit assumptions.
-7. Return the result in a JSON format matching the following Zod schema:
+7. Return the result in JSON matching this schema:
 
-${IntentExtractionResultSchema.partial().passthrough()._getCssInJs().join("\n")}
+${schemaDescription}
 
 Ensure the JSON is perfectly valid and can be directly parsed. Do not include any additional text outside the JSON object.
 `;
 
-    const response = await this.llm.invoke([
+    const response = await (this.llm as any).invoke([
       ["system", systemPrompt],
       ["human", prompt],
     ]);
 
-    const content = typeof response === "string" ? response : response.content;
+    const content = typeof response === "string"
+      ? response
+      : typeof response?.content === "string"
+        ? response.content
+        : String(response);
 
     let parsedResult;
     try {
