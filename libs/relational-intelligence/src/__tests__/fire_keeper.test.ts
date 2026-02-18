@@ -1,14 +1,21 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   FireKeeper,
   createAgentReport,
   EngagementMode,
+  HumanEngagementRequest,
 } from "../fire_keeper.js";
 import {
   createImportanceUnit,
   ImportanceContext,
+  ImportanceStore,
 } from "../importance_unit.js";
-import { MedicineWheelQuadrant, createQuadrantPresence } from "../medicine_wheel.js";
+import { MedicineWheelQuadrant, createQuadrantPresence, MedicineWheelFilter, WheelAssessment } from "../medicine_wheel.js";
+import { SpiralTracker, EpistemicCircle } from "../epistemic_iteration.js"; // Note: SpiralShiftType is not directly used here, so no need to import it
+import { ValueGate, GateVerdict, ConstraintSeverity } from "../value_gate.js";
+import { DirectionalDecomposer, IntentExtractor, DirectionalAnalysis, IntentExtractionResult } from "../../prompt-decomposition/src/index.js";
+import { PromptDecompositionBridge, RelationalIntelligenceBridge } from "../../narrative-tracing/src/adapters/index.js";
+import { NarrativeEventType } from "../../narrative-tracing/src/event_types.js";
 
 describe("createAgentReport", () => {
   it("creates a report with defaults", () => {
