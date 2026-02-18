@@ -18,6 +18,16 @@
       "types": "./dist/adapters/index.d.ts",
       "import": "./dist/adapters/index.js",
       "require": "./dist/adapters/index.cjs"
+    },
+    "./adapters/prompt_decomposition_bridge": {
+      "types": "./dist/adapters/prompt_decomposition_bridge.d.ts",
+      "import": "./dist/adapters/prompt_decomposition_bridge.js",
+      "require": "./dist/adapters/prompt_decomposition_bridge.cjs"
+    },
+    "./adapters/relational_intelligence_bridge": {
+      "types": "./dist/adapters/relational_intelligence_bridge.d.ts",
+      "import": "./dist/adapters/relational_intelligence_bridge.js",
+      "require": "./dist/adapters/relational_intelligence_bridge.cjs"
     }
   },
   "files": [
@@ -53,13 +63,21 @@
   },
   "peerDependencies": {
     "@langchain/core": ">=0.2.0",
-    "langfuse": ">=3.0.0"
+    "langfuse": ">=3.0.0",
+    "ava-langchain-prompt-decomposition": ">=0.1.0",
+    "ava-langchain-relational-intelligence": ">=0.1.0"
   },
   "peerDependenciesMeta": {
     "@langchain/core": {
       "optional": true
     },
     "langfuse": {
+      "optional": true
+    },
+    "ava-langchain-prompt-decomposition": {
+      "optional": true
+    },
+    "ava-langchain-relational-intelligence": {
       "optional": true
     }
   },
