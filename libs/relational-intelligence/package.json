@@ -1,6 +1,6 @@
 {
   "name": "ava-langchain-relational-intelligence",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Relational Intelligence for the Narrative Intelligence Stack - Medicine Wheel ontology, importance units, epistemic iteration, value gates, and Fire Keeper coordination grounded in Indigenous relational paradigms",
   "type": "module",
   "engines": {

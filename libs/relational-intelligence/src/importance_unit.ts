@@ -1,15 +1,3 @@
-/**
- * Importance Unit Schema
- *
- * Defines the "unit" of importance in a relational system.
- * Importance here is not salience (Western) but accountability (Indigenous).
- *
- * Each unit connects data back to its relational source through
- * Relational Strings: The Land, The Dream, The Code, The Vision.
- * These are not flat tags -- they are living connections that must
- * be maintained and deepened over time.
- */
-
 import { v4 as uuidv4 } from "uuid";
 import {
   MedicineWheelQuadrant,
@@ -105,6 +93,18 @@ export const CONTEXT_WEIGHTS: Record<ImportanceContext, number> = {
   [ImportanceContext.EXPLORATORY]: 1.3,
   [ImportanceContext.ANALYTICAL]: 1.0,
   [ImportanceContext.EXTRACTED]: 0.7,
+};
+
+/**
+ * Decay factors specific to context. Lower means slower decay.
+ */
+export const CONTEXT_DECAY_FACTORS: Record<ImportanceContext, number> = {
+  [ImportanceContext.LIMINAL]: 0.98, // Very slow decay
+  [ImportanceContext.CEREMONIAL]: 0.97, // Very slow decay
+  [ImportanceContext.DIALOGICAL]: 0.92,
+  [ImportanceContext.EXPLORATORY]: 0.90,
+  [ImportanceContext.ANALYTICAL]: 0.85,
+  [ImportanceContext.EXTRACTED]: 0.75, // Fastest decay, needs frequent re-validation
 };
 
 /**
@@ -207,13 +207,18 @@ export function deepenUnit(
   unit.lastRevisitedAt = new Date().toISOString();
   unit.updatedAt = new Date().toISOString();
 
-  // Strengthen accountability on revisit
-  const contextBoost = newContext
+  // Calculate dynamic boost based on relational completeness and context
+  const relationalCompleteness = calculateRelationalCompleteness(unit);
+  const baseBoost = newContext
     ? CONTEXT_WEIGHTS[newContext] * 0.1
-    : 0.05;
+    : CONTEXT_WEIGHTS[unit.context] * 0.05;
+
+  // Boost is proportional to relational completeness, and diminishes as score approaches 1.0
+  const dynamicBoost = baseBoost * relationalCompleteness * (1 - unit.accountabilityScore);
+
   unit.accountabilityScore = Math.min(
     1.0,
-    unit.accountabilityScore + contextBoost
+    unit.accountabilityScore + dynamicBoost
   );
 
   // Append refinement to content (circling deepens, not replaces)
@@ -229,11 +234,14 @@ export function deepenUnit(
  */
 export function decayAccountability(
   unit: ImportanceUnit,
-  decayFactor: number = 0.95
+  customDecayFactor?: number
 ): void {
+  // Use context-dependent decay factor if not overridden
+  const effectiveDecayFactor = customDecayFactor ?? CONTEXT_DECAY_FACTORS[unit.context];
+
   unit.accountabilityScore = Math.max(
     0.1,
-    unit.accountabilityScore * decayFactor
+    unit.accountabilityScore * effectiveDecayFactor
   );
   unit.updatedAt = new Date().toISOString();
 }
@@ -307,6 +315,7 @@ export function hasValueConflict(unit: ImportanceUnit): boolean {
  */
 export class ImportanceStore {
   private units: Map<string, ImportanceUnit> = new Map();
+  static readonly CURRENT_VERSION = 1;
 
   /**
    * Add a new importance unit.
@@ -403,16 +412,54 @@ export class ImportanceStore {
    * Serialize all units to JSON.
    */
   serialize(): string {
-    return JSON.stringify(Array.from(this.units.values()));
+    return JSON.stringify({
+      _version: ImportanceStore.CURRENT_VERSION,
+      units: Array.from(this.units.values()),
+    });
   }
 
   /**
    * Load units from JSON.
    */
   load(json: string): void {
-    const units: ImportanceUnit[] = JSON.parse(json);
-    for (const unit of units) {
+    const parsed = JSON.parse(json);
+    let unitsToLoad: ImportanceUnit[];
+
+    if (parsed._version === ImportanceStore.CURRENT_VERSION) {
+      unitsToLoad = parsed.units;
+    } else if (parsed._version === undefined || parsed._version === 0) {
+      // Assuming version 0 is the old format without _version field or version 0
+      unitsToLoad = parsed.map((unit: any) => this._migrateV0toV1(unit));
+    } else {
+      throw new Error(`Unsupported ImportanceStore version: ${parsed._version}`);
+    }
+
+    this.units.clear();
+    for (const unit of unitsToLoad) {
       this.units.set(unit.id, unit);
     }
+  }
+
+  private _migrateV0toV1(oldUnit: any): ImportanceUnit {
+    // This is a placeholder for actual migration logic if schema changes.
+    // For now, it just ensures all expected fields are present with defaults.
+    return {
+      id: oldUnit.id,
+      content: oldUnit.content,
+      sourceSessionId: oldUnit.sourceSessionId,
+      sourceInputId: oldUnit.sourceInputId,
+      relationalStrings: oldUnit.relationalStrings || [],
+      context: oldUnit.context,
+      wheelPresence: oldUnit.wheelPresence || createQuadrantPresence(),
+      accountabilityScore: oldUnit.accountabilityScore,
+      valueAlignmentScore: oldUnit.valueAlignmentScore || 0.5,
+      iterationCount: oldUnit.iterationCount || 0,
+      humanValidated: oldUnit.humanValidated || false,
+      explicitAsks: oldUnit.explicitAsks || [],
+      implicitAsks: oldUnit.implicitAsks || [],
+      createdAt: oldUnit.createdAt,
+      updatedAt: oldUnit.updatedAt,
+      lastRevisitedAt: oldUnit.lastRevisitedAt,
+    };
   }
 }

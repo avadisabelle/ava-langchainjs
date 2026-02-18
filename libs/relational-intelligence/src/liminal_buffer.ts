@@ -1,15 +1,3 @@
-/**
- * Liminal Data Buffer
- *
- * A specific high-context buffer for dream-state and liminal recordings.
- * These are not "low-quality" inputs; they are "high-context" inputs.
- * The agent should give higher weight to values expressed in liminal
- * states, as they are less filtered by the rational mind's pruning.
- *
- * The Liminal Buffer serves as the "Root Context" that informs how
- * all other "Lower-Context" (technical) tasks are pruned.
- */
-
 import { v4 as uuidv4 } from "uuid";
 import {
   ImportanceUnit,
@@ -121,7 +109,7 @@ export function createLiminalInput(
  * const buffer = new LiminalBuffer();
  *
  * // Capture a half-awake recording
- * const input = buffer.capture(
+ * const input = await buffer.capture(
  *   "The system needs to breathe... the knowledge graph should be alive, not flat...",
  *   LiminalMode.HYPNAGOGIC,
  *   "session_123",
@@ -132,13 +120,14 @@ export function createLiminalInput(
  * console.log(input.weight); // 1.5
  *
  * // Check if technical work aligns with liminal context
- * const aligned = buffer.checkAlignment("Add flat JSON schema for knowledge graph");
+ * const aligned = await buffer.checkAlignment("Add flat JSON schema for knowledge graph");
  * console.log(aligned.conflicts); // ["Liminal context suggests living, not flat structure"]
  * ```
  */
 export class LiminalBuffer {
   private inputs: Map<string, LiminalInput> = new Map();
   private wheelFilter: MedicineWheelFilter;
+  static readonly CURRENT_VERSION = 1;
 
   constructor() {
     this.wheelFilter = new MedicineWheelFilter();
@@ -149,18 +138,18 @@ export class LiminalBuffer {
    * Automatically assesses through the Medicine Wheel
    * and creates initial importance units.
    */
-  capture(
+  async capture( // Made async
     content: string,
     mode: LiminalMode,
     sessionId: string,
     options: { sourceFile?: string } = {}
-  ): LiminalInput {
+  ): Promise<LiminalInput> {
     const input = createLiminalInput(content, mode, sessionId, {
       sourceFile: options.sourceFile,
     });
 
     // Assess through Medicine Wheel
-    input.wheelAssessment = this.wheelFilter.assess(input.id, content);
+    input.wheelAssessment = await this.wheelFilter.assess(input.id, content); // Await here
 
     // Create an importance unit from this liminal input
     const unit = createImportanceUnit(
@@ -242,12 +231,12 @@ export class LiminalBuffer {
    * Check whether proposed technical work aligns with
    * the liminal root context.
    */
-  checkAlignment(proposedAction: string): {
+  async checkAlignment(proposedAction: string): Promise<{ // Made async
     aligned: boolean;
     conflicts: string[];
     supportingInputs: string[];
-  } {
-    const actionAssessment = this.wheelFilter.assess(
+  }> {
+    const actionAssessment = await this.wheelFilter.assess( // Await here
       "action-check",
       proposedAction
     );
@@ -333,16 +322,49 @@ export class LiminalBuffer {
    * Serialize the buffer to JSON.
    */
   serialize(): string {
-    return JSON.stringify(Array.from(this.inputs.values()));
+    return JSON.stringify({
+      _version: LiminalBuffer.CURRENT_VERSION,
+      inputs: Array.from(this.inputs.values()),
+    });
   }
 
   /**
    * Load inputs from JSON.
    */
   load(json: string): void {
-    const inputs: LiminalInput[] = JSON.parse(json);
-    for (const input of inputs) {
+    const parsed = JSON.parse(json);
+    let inputsToLoad: LiminalInput[];
+
+    if (parsed._version === LiminalBuffer.CURRENT_VERSION) {
+      inputsToLoad = parsed.inputs;
+    } else if (parsed._version === undefined || parsed._version === 0) {
+      // Assuming version 0 is the old format without _version field or version 0
+      inputsToLoad = parsed.map((input: any) => this._migrateV0toV1(input));
+    } else {
+      throw new Error(`Unsupported LiminalBuffer version: ${parsed._version}`);
+    }
+
+    this.inputs.clear();
+    for (const input of inputsToLoad) {
       this.inputs.set(input.id, input);
     }
+  }
+
+  private _migrateV0toV1(oldInput: any): LiminalInput {
+    // Placeholder migration logic - add default values for new fields
+    return {
+      id: oldInput.id,
+      content: oldInput.content,
+      mode: oldInput.mode,
+      weight: oldInput.weight || LIMINAL_MODE_WEIGHTS[oldInput.mode as LiminalMode],
+      sessionId: oldInput.sessionId,
+      sourceFile: oldInput.sourceFile,
+      wheelAssessment: oldInput.wheelAssessment,
+      importanceUnits: oldInput.importanceUnits || [],
+      integrated: oldInput.integrated || false,
+      influenceCount: oldInput.influenceCount || 0,
+      capturedAt: oldInput.capturedAt,
+      integratedAt: oldInput.integratedAt,
+    };
   }
 }
