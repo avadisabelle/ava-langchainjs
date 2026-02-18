@@ -11,6 +11,8 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
+import { BaseChatModel, BaseLLM } from "@langchain/core/language_models/base";
+import { z } from "zod";
 
 /**
  * The four quadrants of the Medicine Wheel.
@@ -113,11 +115,26 @@ export const QUADRANT_KEYWORDS: Record<MedicineWheelQuadrant, string[]> = {
   ],
 };
 
+// Zod schema for LLM output validation
+const QuadrantPresenceSchema = z.object({
+  physical: z.number().min(0).max(1).describe("The degree to which the content engages the Physical (embodied, material) quadrant (0-1)."),
+  emotional: z.number().min(0).max(1).describe("The degree to which the content engages the Emotional (felt, relational) quadrant (0-1)."),
+  mental: z.number().min(0).max(1).describe("The degree to which the content engages the Mental (analytical, logical) quadrant (0-1)."),
+  spiritual: z.number().min(0).max(1).describe("The degree to which the content engages the Spiritual (intuitive, visionary) quadrant (0-1)."),
+}).transform((data) => ({
+  [MedicineWheelQuadrant.PHYSICAL]: data.physical,
+  [MedicineWheelQuadrant.EMOTIONAL]: data.emotional,
+  [MedicineWheelQuadrant.MENTAL]: data.mental,
+  [MedicineWheelQuadrant.SPIRITUAL]: data.spiritual,
+}));
+
 export interface MedicineWheelFilterOptions {
   /** Threshold below which a quadrant is considered neglected. Default: 0.15 */
   neglectThreshold?: number;
   /** Minimum relational coverage for balanced assessment. Default: 0.5 */
   balanceThreshold?: number;
+  /** Optional LLM for enhanced quadrant classification. */
+  llm?: BaseChatModel | BaseLLM;
 }
 
 /**
@@ -143,18 +160,20 @@ export interface MedicineWheelFilterOptions {
 export class MedicineWheelFilter {
   private neglectThreshold: number;
   private balanceThreshold: number;
+  private llm?: BaseChatModel | BaseLLM;
 
   constructor(options: MedicineWheelFilterOptions = {}) {
     this.neglectThreshold = options.neglectThreshold ?? 0.15;
     this.balanceThreshold = options.balanceThreshold ?? 0.5;
+    this.llm = options.llm;
   }
 
   /**
    * Assess an input across all four quadrants of the Medicine Wheel.
    * Returns a WheelAssessment indicating relational engagement.
    */
-  assess(inputId: string, content: string): WheelAssessment {
-    const presence = this.classifyPresence(content);
+  async assess(inputId: string, content: string): Promise<WheelAssessment> {
+    const presence = await this.classifyPresence(content);
     const leadQuadrant = this.determineLeadQuadrant(presence);
     const neglectedQuadrants = this.findNeglectedQuadrants(presence);
     const relationalCoverage = this.calculateCoverage(presence);
@@ -176,11 +195,11 @@ export class MedicineWheelFilter {
    * Assess and return guidance about what is missing.
    * The wheel does not just classify -- it reveals gaps.
    */
-  assessWithGuidance(
+  async assessWithGuidance(
     inputId: string,
     content: string
-  ): WheelAssessment & { guidance: string[] } {
-    const assessment = this.assess(inputId, content);
+  ): Promise<WheelAssessment & { guidance: string[] }> {
+    const assessment = await this.assess(inputId, content);
     const guidance: string[] = [];
 
     if (assessment.neglectedQuadrants.length > 0) {
@@ -220,7 +239,16 @@ export class MedicineWheelFilter {
   /**
    * Classify content presence across quadrants using keyword matching.
    */
-  private classifyPresence(content: string): QuadrantPresence {
+  private async classifyPresence(content: string): Promise<QuadrantPresence> {
+    if (this.llm) {
+      try {
+        return await this._classifyPresenceWithLLM(content);
+      } catch (e) {
+        console.warn("LLM quadrant classification failed, falling back to heuristics:", e);
+        // Fallback to heuristic-based classification on LLM failure
+      }
+    }
+
     const lower = content.toLowerCase();
     const words = lower.split(/\s+/);
 
@@ -258,6 +286,53 @@ export class MedicineWheelFilter {
     }
 
     return presence;
+  }
+
+  private async _classifyPresenceWithLLM(content: string): Promise<QuadrantPresence> {
+    if (!this.llm) {
+      throw new Error("LLM not provided for LLM-based classification.");
+    }
+
+    const systemPrompt = `You are an expert in Indigenous Medicine Wheel epistemology and relational intelligence.
+Your task is to analyze the provided content and determine its engagement with each of the four Medicine Wheel quadrants: Physical, Emotional, Mental, and Spiritual.
+Assign a score from 0 (no engagement) to 1 (strong engagement) for each quadrant.
+
+Medicine Wheel Quadrants:
+- PHYSICAL: Material, embodied, land-based. Code, infrastructure, artifacts, tangible actions, physical sensations.
+- EMOTIONAL: Felt, relational, heart-centered. Bonds, care, harm, healing, trust, feelings, community, empathy.
+- MENTAL: Analytical, logical, pattern-recognition. Design, architecture, analysis, strategy, ontology, abstract concepts.
+- SPIRITUAL: Intuitive, visionary, dream-adjacent. Liminal insight, ceremony, vision, purpose, meaning, connection to ancestors/spirit.
+
+Output your assessment as a JSON object matching the following Zod schema:
+
+${QuadrantPresenceSchema._getCssInJs().join("\n")}
+
+Ensure the JSON is perfectly valid and can be directly parsed. Do not include any additional text outside the JSON object.
+`;
+
+    const response = await this.llm.invoke([
+      ["system", systemPrompt],
+      ["human", `Content to assess: "${content}"`],
+    ]);
+
+    const resContent = typeof response === "string" ? response : response.content;
+
+    let parsedResult;
+    try {
+      parsedResult = JSON.parse(resContent);
+    } catch (e) {
+      console.error("Failed to parse LLM response as JSON for MedicineWheelFilter:", e);
+      console.error("LLM response content:", resContent);
+      throw new Error("LLM output was not valid JSON for QuadrantPresence.");
+    }
+
+    const validationResult = QuadrantPresenceSchema.safeParse(parsedResult);
+    if (!validationResult.success) {
+      console.error("LLM output did not match schema for MedicineWheelFilter:", validationResult.error);
+      throw new Error("LLM output did not match expected schema for QuadrantPresence.");
+    }
+
+    return validationResult.data;
   }
 
   /**

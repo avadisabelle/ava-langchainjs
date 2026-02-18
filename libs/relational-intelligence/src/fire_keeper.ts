@@ -27,6 +27,11 @@ import {
 } from "./importance_unit.js";
 import { SpiralTracker, Spiral } from "./epistemic_iteration.js";
 import { ValueGate, GateVerdict, GateContext } from "./value_gate.js";
+import { DirectionalDecomposer, IntentExtractor } from "../../prompt-decomposition/src/index.js"; // From PDE
+import {
+  PromptDecompositionBridge,
+  RelationalIntelligenceBridge,
+} from "../../narrative-tracing/src/adapters/index.js"; // From Narrative Tracing
 
 /**
  * A report from a sub-agent to the Fire Keeper.
@@ -115,6 +120,8 @@ export enum EngagementMode {
   CODE_REVIEW = "code_review",
   /** Vision alignment, directional decisions. */
   VISION = "vision",
+  /** Prompt refinement due to ambiguity or imbalance. */
+  PROMPT_REFINEMENT = "prompt_refinement",
 }
 
 /**
@@ -156,6 +163,17 @@ export interface FireKeeperState {
   ceremonyOnTrack: boolean;
 }
 
+export interface FireKeeperOptions {
+  wheelFilter?: MedicineWheelFilter;
+  importanceStore?: ImportanceStore;
+  spiralTracker?: SpiralTracker;
+  valueGate?: ValueGate;
+  promptDecomposer?: DirectionalDecomposer; // Optional PDE integration
+  intentExtractor?: IntentExtractor; // Optional PDE integration
+  promptDecompositionBridge?: PromptDecompositionBridge; // Optional tracing
+  relationalIntelligenceBridge?: RelationalIntelligenceBridge; // Optional tracing
+}
+
 /**
  * The Fire Keeper coordinates sub-agents, holds the Medicine Wheel,
  * and ensures the ceremony stays on track.
@@ -166,14 +184,19 @@ export interface FireKeeperState {
  *
  * // Receive a report from a sub-agent
  * const report = createAgentReport("agent_1", "Mia", "Built schema", "Schema complete");
- * const review = keeper.reviewReport(report);
+ * const review = await keeper.reviewReport(report); // Note: now async
  *
  * if (review.requiresHumanEngagement) {
  *   console.log("Calling human:", review.engagementRequest);
  * }
  *
+ * // Process a raw prompt through the Fire Keeper
+ * const promptGuidance = await keeper.processPrompt(
+ *   "Develop a module that integrates with the database and ensures data integrity."
+ * );
+ *
  * // Check if an action can proceed
- * const verdict = keeper.gateAction({
+ * const verdict = await keeper.gateAction({ // Note: now async
  *   action: "Deploy ontology to production",
  *   actionDescription: "Pushes Indigenous ontology schema live",
  *   agentId: "agent_2",
@@ -187,13 +210,22 @@ export class FireKeeper {
   private importanceStore: ImportanceStore;
   private spiralTracker: SpiralTracker;
   private valueGate: ValueGate;
+  private promptDecomposer?: DirectionalDecomposer;
+  private intentExtractor?: IntentExtractor;
+  private promptDecompositionBridge?: PromptDecompositionBridge;
+  private relationalIntelligenceBridge?: RelationalIntelligenceBridge;
+
   private state: FireKeeperState;
 
-  constructor(visionStatement: string) {
-    this.wheelFilter = new MedicineWheelFilter();
-    this.importanceStore = new ImportanceStore();
-    this.spiralTracker = new SpiralTracker();
-    this.valueGate = new ValueGate();
+  constructor(visionStatement: string, options: FireKeeperOptions = {}) {
+    this.wheelFilter = options.wheelFilter ?? new MedicineWheelFilter();
+    this.importanceStore = options.importanceStore ?? new ImportanceStore();
+    this.spiralTracker = options.spiralTracker ?? new SpiralTracker();
+    this.valueGate = options.valueGate ?? new ValueGate();
+    this.promptDecomposer = options.promptDecomposer;
+    this.intentExtractor = options.intentExtractor;
+    this.promptDecompositionBridge = options.promptDecompositionBridge;
+    this.relationalIntelligenceBridge = options.relationalIntelligenceBridge;
 
     this.state = {
       pendingReports: [],
@@ -206,6 +238,84 @@ export class FireKeeper {
   }
 
   // ===========================================================================
+  // PROMPT PROCESSING AND REFINEMENT
+  // ===========================================================================
+
+  /**
+   * Processes a raw prompt through PDE components and assesses its relational balance.
+   * Can trigger human engagement for prompt refinement if ambiguities or imbalances are found.
+   */
+  async processPrompt(
+    prompt: string,
+    agentId: string,
+    sessionId: string,
+    parentSpanId?: string
+  ): Promise<{
+    requiresHumanEngagement: boolean;
+    engagementRequest?: HumanEngagementRequest;
+    directionalAnalysisId?: string;
+    intentExtractionId?: string;
+  }> {
+    let requiresHumanEngagement = false;
+    let engagementRequest: HumanEngagementRequest | undefined;
+    let directionalAnalysisId: string | undefined;
+    let intentExtractionId: string | undefined;
+
+    this.promptDecompositionBridge?.logDecompositionStart(prompt, parentSpanId);
+
+    if (this.promptDecomposer) {
+      const directionalAnalysis = await this.promptDecomposer.decompose(prompt);
+      directionalAnalysisId = this.promptDecompositionBridge?.logDirectionalAnalysis(
+        directionalAnalysis,
+        parentSpanId
+      );
+
+      if (!this.promptDecomposer.isBalanced(directionalAnalysis)) {
+        requiresHumanEngagement = true;
+        const guidance = this.promptDecomposer.getGuidance(directionalAnalysis);
+        engagementRequest = this.requestHumanEngagement(
+          "Prompt lacks relational balance or neglects key directions.",
+          EngagementMode.PROMPT_REFINEMENT,
+          `Original Prompt: "${prompt}"\n\nGuidance:\n${guidance.join("\n")}`,
+          agentId,
+          0.8, // High priority for prompt refinement
+          parentSpanId
+        );
+      }
+    }
+
+    if (this.intentExtractor) {
+      const intentResult = await this.intentExtractor.extract(prompt);
+      intentExtractionId = this.promptDecompositionBridge?.logIntentExtraction(
+        intentResult,
+        parentSpanId
+      );
+
+      if (intentResult.ambiguities.length > 0) {
+        requiresHumanEngagement = true;
+        const context = `Original Prompt: "${prompt}"\n\nAmbiguities detected:\n- ${intentResult.ambiguities.join("\n- ")}`;
+        if (!engagementRequest) {
+          engagementRequest = this.requestHumanEngagement(
+            "Prompt contains ambiguities in intent or dependencies.",
+            EngagementMode.PROMPT_REFINEMENT,
+            context,
+            agentId,
+            0.7, // Medium-high priority
+            parentSpanId
+          );
+        } else {
+          // Append to existing request context if present
+          engagementRequest.context += `\n\nAdditional Ambiguities:\n- ${intentResult.ambiguities.join("\n- ")}`;
+          engagementRequest.priority = Math.max(engagementRequest.priority, 0.7);
+        }
+        this.promptDecompositionBridge?.logAmbiguityDetected(intentResult.ambiguities, parentSpanId);
+      }
+    }
+
+    return { requiresHumanEngagement, engagementRequest, directionalAnalysisId, intentExtractionId };
+  }
+
+  // ===========================================================================
   // AGENT REPORT REVIEW
   // ===========================================================================
 
@@ -213,12 +323,12 @@ export class FireKeeper {
    * Review a sub-agent's report. The Fire Keeper checks the work
    * against the Medicine Wheel and the project vision.
    */
-  reviewReport(report: AgentReport): {
+  async reviewReport(report: AgentReport, parentSpanId?: string): Promise<{
     accepted: boolean;
     feedback: string[];
     requiresHumanEngagement: boolean;
     engagementRequest?: HumanEngagementRequest;
-  } {
+  }> {
     const feedback: string[] = [];
     let accepted = true;
     let requiresHumanEngagement = false;
@@ -226,7 +336,8 @@ export class FireKeeper {
 
     // Assess the work through the Medicine Wheel
     const assessment = report.wheelAssessment ??
-      this.wheelFilter.assess(report.id, report.action + " " + report.outcome);
+      (await this.wheelFilter.assess(report.id, report.action + " " + report.outcome));
+    this.relationalIntelligenceBridge?.logWheelAssessmentPerformed(assessment, parentSpanId);
 
     // Check relational coverage
     if (!assessment.balanced) {
@@ -242,31 +353,32 @@ export class FireKeeper {
         "The Spiritual quadrant is neglected. Does this work align with the deeper vision?"
       );
       requiresHumanEngagement = true;
-      engagementRequest = {
-        id: uuidv4(),
-        reason: "Sub-agent work lacks spiritual/vision alignment.",
-        mode: EngagementMode.VISION,
-        context: `Agent ${report.agentName} completed: ${report.action}. ` +
-          `Outcome: ${report.outcome}. Vision alignment unclear.`,
-        priority: 0.7,
-        requestingAgentId: report.agentId,
-        timestamp: new Date().toISOString(),
-      };
+      engagementRequest = this.requestHumanEngagement(
+        "Sub-agent work lacks spiritual/vision alignment.",
+        EngagementMode.VISION,
+        `Agent ${report.agentName} completed: ${report.action}. ` +
+        `Outcome: ${report.outcome}. Vision alignment unclear.`,
+        report.agentId,
+        0.7,
+        parentSpanId
+      );
     }
 
     // Store importance units from the report
     for (const unit of report.importanceUnits) {
       this.importanceStore.add(unit);
+      this.relationalIntelligenceBridge?.logImportanceUnitCreated(unit, parentSpanId);
     }
 
     // Record topic spirals
     for (const topic of report.topicsCircled) {
-      this.spiralTracker.recordCircle(
+      const circle = await this.spiralTracker.recordCircle( // Now async
         topic,
         topic,
         `[Via ${report.agentName}]: ${report.outcome}`,
         report.id
       );
+      this.relationalIntelligenceBridge?.logSpiralCircleRecorded(circle, parentSpanId);
     }
 
     // Low confidence triggers human check
@@ -277,16 +389,15 @@ export class FireKeeper {
       );
       if (!requiresHumanEngagement) {
         requiresHumanEngagement = true;
-        engagementRequest = {
-          id: uuidv4(),
-          reason: "Low agent confidence in work output.",
-          mode: EngagementMode.CODE_REVIEW,
-          context: `Agent ${report.agentName} (confidence: ${(report.confidence * 100).toFixed(0)}%) ` +
-            `completed: ${report.action}.`,
-          priority: 0.5,
-          requestingAgentId: report.agentId,
-          timestamp: new Date().toISOString(),
-        };
+        engagementRequest = this.requestHumanEngagement(
+          "Low agent confidence in work output.",
+          EngagementMode.CODE_REVIEW,
+          `Agent ${report.agentName} (confidence: ${(report.confidence * 100).toFixed(0)}%) ` +
+          `completed: ${report.action}.`,
+          report.agentId,
+          0.5,
+          parentSpanId
+        );
       }
     }
 
@@ -307,27 +418,31 @@ export class FireKeeper {
   /**
    * Gate an action through the value constraints.
    */
-  gateAction(context: GateContext): GateVerdict {
-    return this.valueGate.evaluate(context);
+  async gateAction(context: GateContext, parentSpanId?: string): Promise<GateVerdict> {
+    const verdict = await this.valueGate.evaluate(context); // Now async
+    this.relationalIntelligenceBridge?.logValueGateVerdictIssued(verdict, parentSpanId);
+    return verdict;
   }
 
   /**
    * Quick check: can an agent proceed with this action?
    */
-  canAgentProceed(
+  async canAgentProceed( // Now async
     action: string,
     description: string,
     agentId: string,
     sessionId: string,
     metadata: Record<string, unknown> = {}
-  ): boolean {
-    return this.valueGate.canProceed(
+  ): Promise<boolean> {
+    const verdict = await this.valueGate.canProceed( // Now async
       action,
       description,
       agentId,
       sessionId,
       metadata
     );
+    // Logging is handled within valueGate.evaluate, which canProceed calls
+    return verdict;
   }
 
   // ===========================================================================
@@ -338,12 +453,13 @@ export class FireKeeper {
    * Record a relational milestone. Milestones are based on
    * relational completion, not time elapsed.
    */
-  recordMilestone(
+  async recordMilestone( // Now async
     description: string,
     relatedSpirals: string[],
-    resolvedUnitIds: string[]
-  ): RelationalMilestone {
-    const assessment = this.wheelFilter.assess(
+    resolvedUnitIds: string[],
+    parentSpanId?: string
+  ): Promise<RelationalMilestone> {
+    const assessment = await this.wheelFilter.assess( // Now async
       uuidv4(),
       description
     );
@@ -360,6 +476,7 @@ export class FireKeeper {
 
     this.state.milestones.push(milestone);
     this.updateRelationalHealth();
+    this.relationalIntelligenceBridge?.logRelationalMilestoneRecorded(milestone, parentSpanId);
 
     return milestone;
   }
@@ -388,7 +505,8 @@ export class FireKeeper {
     mode: EngagementMode,
     context: string,
     requestingAgentId: string,
-    priority: number = 0.5
+    priority: number = 0.5,
+    parentSpanId?: string
   ): HumanEngagementRequest {
     const request: HumanEngagementRequest = {
       id: uuidv4(),
@@ -401,6 +519,7 @@ export class FireKeeper {
     };
 
     this.state.engagementRequests.push(request);
+    this.relationalIntelligenceBridge?.logHumanEngagementRequested(request, parentSpanId);
     return request;
   }
 
@@ -416,10 +535,11 @@ export class FireKeeper {
   /**
    * Resolve a human engagement request.
    */
-  resolveEngagement(requestId: string): void {
+  resolveEngagement(requestId: string, parentSpanId?: string): void {
     this.state.engagementRequests = this.state.engagementRequests.filter(
       (r) => r.id !== requestId
     );
+    this.relationalIntelligenceBridge?.logHumanEngagementResolved(requestId, parentSpanId);
   }
 
   // ===========================================================================

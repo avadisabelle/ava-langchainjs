@@ -11,6 +11,8 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
+import { BaseChatModel, BaseLLM } from "@langchain/core/language_models/base";
+import { z } from "zod";
 
 /**
  * A single pass through a topic during epistemic circling.
@@ -141,6 +143,13 @@ export enum SpiralShiftType {
   OPENING = "opening",
 }
 
+// Zod schema for LLM concept extraction output
+const ConceptsSchema = z.array(z.string()).describe("A list of key concepts extracted from the content.");
+
+export interface SpiralTrackerOptions {
+  llm?: BaseChatModel | BaseLLM;
+}
+
 /**
  * The Spiral Tracker manages epistemic iteration across sessions.
  * It recognizes circling as a meaningful epistemic structure,
@@ -169,18 +178,23 @@ export enum SpiralShiftType {
  */
 export class SpiralTracker {
   private spirals: Map<string, Spiral> = new Map();
+  private llm?: BaseChatModel | BaseLLM;
+
+  constructor(options?: SpiralTrackerOptions) {
+    this.llm = options?.llm;
+  }
 
   /**
    * Record a new circle for a topic. If the topic is new, opens a spiral.
    * If returning, adds a new circle and analyzes the shift.
    */
-  recordCircle(
+  async recordCircle(
     topicKey: string,
     topicName: string,
     content: string,
     sessionId: string,
     sourceInputId?: string
-  ): EpistemicCircle {
+  ): Promise<EpistemicCircle> {
     const existing = this.spirals.get(topicKey);
 
     if (!existing) {
@@ -244,27 +258,30 @@ export class SpiralTracker {
    * This is where the "important lines" live --
    * in the subtle shifts between iterations.
    */
-  analyzeShifts(topicKey: string): SpiralShiftAnalysis[] {
+  async analyzeShifts(topicKey: string): Promise<SpiralShiftAnalysis[]> {
     const spiral = this.spirals.get(topicKey);
     if (!spiral) return [];
 
-    return spiral.circles.map((circle, index) => {
+    const shifts: SpiralShiftAnalysis[] = [];
+    for (let index = 0; index < spiral.circles.length; index++) {
+      const circle = spiral.circles[index];
       if (index === 0) {
-        return {
+        shifts.push({
           circleId: circle.id,
           iteration: circle.iteration,
-          newConcepts: this.extractConcepts(circle.content),
+          newConcepts: await this.extractConcepts(circle.content),
           refinedConcepts: [],
           shiftType: SpiralShiftType.OPENING,
           significance: 1.0,
-        };
+        });
+        continue;
       }
 
       const previousCircle = spiral.circles[index - 1];
       const prevConcepts = new Set(
-        this.extractConcepts(previousCircle.content)
+        await this.extractConcepts(previousCircle.content)
       );
-      const currentConcepts = this.extractConcepts(circle.content);
+      const currentConcepts = await this.extractConcepts(circle.content);
 
       const newConcepts = currentConcepts.filter(
         (c) => !prevConcepts.has(c)
@@ -289,15 +306,16 @@ export class SpiralTracker {
           : 0;
       const significance = Math.min(1.0, changeRatio + depthBonus);
 
-      return {
+      shifts.push({
         circleId: circle.id,
         iteration: circle.iteration,
         newConcepts,
         refinedConcepts,
         shiftType,
         significance,
-      };
-    });
+      });
+    }
+    return shifts;
   }
 
   /**
@@ -359,7 +377,15 @@ export class SpiralTracker {
    * Extract key concepts from content (simplified).
    * In production, this would use NLP or an LLM.
    */
-  private extractConcepts(content: string): string[] {
+  private async extractConcepts(content: string): Promise<string[]> {
+    if (this.llm) {
+      try {
+        return await this._extractConceptsWithLLM(content);
+      } catch (e) {
+        console.warn("LLM concept extraction failed, falling back to heuristics:", e);
+      }
+    }
+
     const words = content.toLowerCase().split(/\s+/);
     // Filter to significant words (>4 chars, not common stop words)
     const stopWords = new Set([
@@ -374,6 +400,47 @@ export class SpiralTracker {
         (w) => w.length > 4 && !stopWords.has(w) && /^[a-z]+$/.test(w)
       )
     )];
+  }
+
+  private async _extractConceptsWithLLM(content: string): Promise<string[]> {
+    if (!this.llm) {
+      throw new Error("LLM not provided for LLM-based concept extraction.");
+    }
+
+    const systemPrompt = `You are an expert at extracting key concepts from text.
+Your task is to analyze the provided content and identify the most important and distinct concepts discussed.
+Return these concepts as a JSON array of strings. Each string should be a concise representation of a concept.
+
+Output your assessment as a JSON object matching the following Zod schema:
+
+${ConceptsSchema._getCssInJs().join("\n")}
+
+Ensure the JSON is perfectly valid and can be directly parsed. Do not include any additional text outside the JSON object.
+`;
+
+    const response = await this.llm.invoke([
+      ["system", systemPrompt],
+      ["human", `Content to extract concepts from: "${content}"`],
+    ]);
+
+    const resContent = typeof response === "string" ? response : response.content;
+
+    let parsedResult;
+    try {
+      parsedResult = JSON.parse(resContent);
+    } catch (e) {
+      console.error("Failed to parse LLM response as JSON for SpiralTracker concept extraction:", e);
+      console.error("LLM response content:", resContent);
+      throw new Error("LLM output was not valid JSON for ConceptsSchema.");
+    }
+
+    const validationResult = ConceptsSchema.safeParse(parsedResult);
+    if (!validationResult.success) {
+      console.error("LLM output did not match schema for SpiralTracker concept extraction:", validationResult.error);
+      throw new Error("LLM output did not match expected schema for ConceptsSchema.");
+    }
+
+    return validationResult.data;
   }
 
   /**
