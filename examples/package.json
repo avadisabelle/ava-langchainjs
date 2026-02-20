@@ -43,6 +43,8 @@
     "@langchain/cloudflare": "workspace:*",
     "@langchain/cohere": "workspace:*",
     "@langchain/community": "workspace:*",
+    "ava-langchain-state-machine-spec": "workspace:*",
+    "ava-langchain-relational-intelligence": "workspace:*",
     "@langchain/core": "workspace:^",
     "@langchain/deepseek": "workspace:*",
     "@langchain/exa": "workspace:*",
