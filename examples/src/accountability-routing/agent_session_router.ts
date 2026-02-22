@@ -207,6 +207,30 @@ class AccountabilityRouter {
     // Fire Keeper reviews the report (vision alignment)
     const review = await this.fireKeeper.reviewReport(report);
 
+    if (review.requiresHumanEngagement && review.engagementRequest) {
+      console.log(`\n🚨 FireKeeper requests human engagement:`);
+      console.log(`   Reason: ${review.engagementRequest.reason}`);
+      console.log(`   Priority: ${review.engagementRequest.priority}`);
+      // In a real ceremony, pause here for human input before proceeding
+    }
+
+    if (!review.accepted) {
+      console.log(`\n⚠️ FireKeeper feedback on work:`);
+      review.feedback.forEach((f) => console.log(`   - ${f}`));
+      // Record in history but do not advance the graph
+      currentSession.history.push({
+        state: this.currentState,
+        action: transitionName,
+        timestamp: new Date().toISOString(),
+      });
+      currentSession.status = "idle";
+      currentSession.currentState = null;
+      throw new Error(
+        `FireKeeper did not accept work for transition "${transitionName}". ` +
+          `Address feedback and retry.`
+      );
+    }
+
     // Record in session history
     currentSession.history.push({
       state: this.currentState,
