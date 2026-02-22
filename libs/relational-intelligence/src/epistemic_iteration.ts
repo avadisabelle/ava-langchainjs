@@ -263,13 +263,18 @@ export class SpiralTracker {
     if (!spiral) return [];
 
     const shifts: SpiralShiftAnalysis[] = [];
+    // Pre-extract all concepts once per circle to avoid redundant LLM calls
+    const allConcepts: string[][] = await Promise.all(
+      spiral.circles.map((c) => this.extractConcepts(c.content))
+    );
     for (let index = 0; index < spiral.circles.length; index++) {
       const circle = spiral.circles[index];
+      const currentConcepts = allConcepts[index];
       if (index === 0) {
         shifts.push({
           circleId: circle.id,
           iteration: circle.iteration,
-          newConcepts: await this.extractConcepts(circle.content),
+          newConcepts: currentConcepts,
           refinedConcepts: [],
           shiftType: SpiralShiftType.OPENING,
           significance: 1.0,
@@ -277,11 +282,7 @@ export class SpiralTracker {
         continue;
       }
 
-      const previousCircle = spiral.circles[index - 1];
-      const prevConcepts = new Set(
-        await this.extractConcepts(previousCircle.content)
-      );
-      const currentConcepts = await this.extractConcepts(circle.content);
+      const prevConcepts = new Set(allConcepts[index - 1]);
 
       const newConcepts = currentConcepts.filter(
         (c) => !prevConcepts.has(c)
@@ -386,11 +387,12 @@ export class SpiralTracker {
       }
     }
 
-    const words = content.toLowerCase().split(/\s+/);
+    // Strip non-letter chars (punctuation) and split into words
+    const words = content.toLowerCase().split(/\s+/).map((w) => w.replace(/[^a-z]/g, ""));
     // Filter to significant words (>4 chars, not common stop words)
     const stopWords = new Set([
       "the", "and", "that", "this", "with", "from", "have",
-      "been", "will", "would", "could", "should", "about",
+      "been", "will", "would", "could", "should",
       "into", "they", "their", "there", "which", "when", "what",
       "also", "more", "some", "than", "just", "very", "being",
     ]);
@@ -413,7 +415,7 @@ Return these concepts as a JSON array of strings. Each string should be a concis
 
 Output your assessment as a JSON object matching the following Zod schema:
 
-${ConceptsSchema._getCssInJs().join("\n")}
+${JSON.stringify(["concept1", "concept2", "concept3"], null, 2)}
 
 Ensure the JSON is perfectly valid and can be directly parsed. Do not include any additional text outside the JSON object.
 `;

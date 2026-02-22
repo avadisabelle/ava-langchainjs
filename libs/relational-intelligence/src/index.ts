@@ -152,3 +152,19 @@ export {
   createLiminalInput,
   LiminalBuffer,
 } from "./liminal_buffer.js";
+
+// =============================================================================
+// Prompt Decomposition Re-exports (consumed by FireKeeper)
+// =============================================================================
+
+export {
+  Direction,
+  DirectionalAnalysis,
+  DirectionalInsight,
+  DirectionalDecomposer,
+  IntentExtractor,
+  IntentExtractionResult,
+  SecondaryIntent,
+  PrimaryIntent,
+  Urgency,
+} from "../../prompt-decomposition/src/index.js";

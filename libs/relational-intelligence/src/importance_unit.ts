@@ -213,8 +213,8 @@ export function deepenUnit(
     ? CONTEXT_WEIGHTS[newContext] * 0.1
     : CONTEXT_WEIGHTS[unit.context] * 0.05;
 
-  // Boost is proportional to relational completeness, and diminishes as score approaches 1.0
-  const dynamicBoost = baseBoost * relationalCompleteness * (1 - unit.accountabilityScore);
+  // Boost is proportional to relational completeness (min 10%), and diminishes as score approaches 1.0
+  const dynamicBoost = baseBoost * Math.max(0.1, relationalCompleteness) * (1 - unit.accountabilityScore);
 
   unit.accountabilityScore = Math.min(
     1.0,

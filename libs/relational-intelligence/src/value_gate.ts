@@ -370,10 +370,10 @@ export class ValueGate {
   /**
    * Evaluate a proposed action against all active constraints.
    */
-  evaluate(context: GateContext): GateVerdict {
+  async evaluate(context: GateContext): Promise<GateVerdict> {
     // If no wheel assessment provided, generate one
     if (!context.wheelAssessment) {
-      context.wheelAssessment = this.wheelFilter.assess(
+      context.wheelAssessment = await this.wheelFilter.assess(
         context.agentId,
         context.action + " " + context.actionDescription
       );
@@ -421,8 +421,8 @@ export class ValueGate {
   /**
    * Quick check: can this action proceed without human involvement?
    */
-  canProceed(action: string, description: string, agentId: string, sessionId: string, metadata: Record<string, unknown> = {}): boolean {
-    const verdict = this.evaluate({
+  async canProceed(action: string, description: string, agentId: string, sessionId: string, metadata: Record<string, unknown> = {}): Promise<boolean> {
+    const verdict = await this.evaluate({
       action,
       actionDescription: description,
       agentId,

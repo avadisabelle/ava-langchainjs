@@ -53,7 +53,7 @@ const mockSpiralTracker = {
     timestamp: new Date().toISOString(),
   }) as EpistemicCircle),
   getActiveSpirals: vi.fn().mockReturnValue([]),
-  getByDepth: vi.fn().mockResolvedValue([]), // Changed to mockResolvedValue
+  getByDepth: vi.fn().mockReturnValue([]),
   closeSpiral: vi.fn(),
   analyzeShifts: vi.fn().mockResolvedValue([]),
   size: 0,
@@ -72,7 +72,7 @@ const mockValueGate = {
 } as unknown as ValueGate;
 
 const mockPromptDecomposer = {
-  decompose: vi.fn(async (prompt) => ({
+  decompose: vi.fn((prompt) => ({
     id: "da-mock",
     timestamp: new Date().toISOString(),
     prompt,
@@ -200,16 +200,17 @@ describe("FireKeeper", () => {
       expect(mockRelationalIntelligenceBridge.logHumanEngagementRequested).toHaveBeenCalled();
     });
 
-    it("should request human engagement if prompt has ambiguities", async () => {
+    it("should request human engagement if prompt has low-confidence intents", async () => {
       mockIntentExtractor.extract.mockResolvedValueOnce({
         id: "ie-mock",
         timestamp: new Date().toISOString(),
         prompt: "Ambiguous prompt.",
         primary: { action: "mock", target: "prompt", urgency: "session", confidence: 1.0 },
-        secondary: [],
+        secondary: [
+          { id: "s1", action: "investigate", target: "something unclear", implicit: false, dependency: null, confidence: 0.3 },
+        ],
         context: { filesNeeded: [], toolsRequired: [], assumptions: [] },
-        ambiguities: ["Ambiguity 1"],
-      } as IntentExtractionResult & { ambiguities: string[] }); // Temporarily add ambiguities for mock
+      } as IntentExtractionResult);
 
       const prompt = "This is ambiguous.";
       const agentId = "agent-proc";
@@ -220,14 +221,14 @@ describe("FireKeeper", () => {
       expect(mockIntentExtractor.extract).toHaveBeenCalled();
       expect(result.requiresHumanEngagement).toBe(true);
       expect(result.engagementRequest?.mode).toBe(EngagementMode.PROMPT_REFINEMENT);
-      expect(result.engagementRequest?.context).toContain("Ambiguity 1");
-      expect(mockPromptDecompositionBridge.logAmbiguityDetected).toHaveBeenCalledWith(["Ambiguity 1"], undefined);
+      expect(result.engagementRequest?.context).toContain("Low-confidence intents");
+      expect(mockPromptDecompositionBridge.logAmbiguityDetected).toHaveBeenCalled();
       expect(mockRelationalIntelligenceBridge.logHumanEngagementRequested).toHaveBeenCalled();
     });
   });
 
   describe("reviewReport", () => {
-    it("accepts a basic report and logs events", async () => {
+    it("accepts a basic report and logs wheel assessment events", async () => {
       const report = createAgentReport(
         "agent_1",
         "Mia",
@@ -240,10 +241,9 @@ describe("FireKeeper", () => {
       expect(review.requiresHumanEngagement).toBe(false);
       expect(mockWheelFilter.assess).toHaveBeenCalled();
       expect(mockRelationalIntelligenceBridge.logWheelAssessmentPerformed).toHaveBeenCalled();
-      expect(mockImportanceStore.add).toHaveBeenCalledWith(expect.any(Object));
-      expect(mockRelationalIntelligenceBridge.logImportanceUnitCreated).toHaveBeenCalled();
-      expect(mockSpiralTracker.recordCircle).toHaveBeenCalled();
-      expect(mockRelationalIntelligenceBridge.logSpiralCircleRecorded).toHaveBeenCalled();
+      // No importanceUnits or topicsCircled in default report, so add/recordCircle not called
+      expect(mockImportanceStore.add).not.toHaveBeenCalled();
+      expect(mockSpiralTracker.recordCircle).not.toHaveBeenCalled();
     });
 
     it("flags low confidence for human engagement and logs event", async () => {
@@ -459,8 +459,8 @@ describe("FireKeeper", () => {
       expect(keeper.getWheelFilter()).toBe(mockWheelFilter);
     });
 
-    it("gets summary", async () => { // Make async because of spiralTracker.getByDepth
-      const summary = await keeper.getSummary();
+    it("gets summary", () => {
+      const summary = keeper.getSummary();
 
       expect(summary.vision).toBe("Initial Vision");
       expect(summary.ceremonyOnTrack).toBe(true);
@@ -468,12 +468,12 @@ describe("FireKeeper", () => {
       expect(typeof summary.pendingReports).toBe("number");
     });
 
-    it("tracks deepest spirals", async () => { // Make async due to spiralTracker.getByDepth
-      mockSpiralTracker.getByDepth.mockResolvedValueOnce([
+    it("tracks deepest spirals", () => {
+      mockSpiralTracker.getByDepth.mockReturnValueOnce([
         { topicKey: "a", depth: 3 },
         { topicKey: "b", depth: 2 },
       ]);
-      const deepest = await keeper.getDeepestSpirals(2);
+      const deepest = keeper.getDeepestSpirals(2);
       expect(deepest[0].topicKey).toBe("a");
       expect(deepest[0].depth).toBe(3);
     });

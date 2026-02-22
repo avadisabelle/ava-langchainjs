@@ -264,7 +264,7 @@ export class FireKeeper {
     this.promptDecompositionBridge?.logDecompositionStart(prompt, parentSpanId);
 
     if (this.promptDecomposer) {
-      const directionalAnalysis = await this.promptDecomposer.decompose(prompt);
+      const directionalAnalysis = this.promptDecomposer.decompose(prompt);
       directionalAnalysisId = this.promptDecompositionBridge?.logDirectionalAnalysis(
         directionalAnalysis,
         parentSpanId
@@ -291,12 +291,18 @@ export class FireKeeper {
         parentSpanId
       );
 
-      if (intentResult.ambiguities.length > 0) {
+      const lowConfidenceIntents = intentResult.secondary.filter(
+        (s) => s.confidence < 0.5
+      );
+      if (lowConfidenceIntents.length > 0) {
         requiresHumanEngagement = true;
-        const context = `Original Prompt: "${prompt}"\n\nAmbiguities detected:\n- ${intentResult.ambiguities.join("\n- ")}`;
+        const ambiguities = lowConfidenceIntents.map(
+          (s) => `${s.action} on ${s.target} (confidence: ${(s.confidence * 100).toFixed(0)}%)`
+        );
+        const context = `Original Prompt: "${prompt}"\n\nLow-confidence intents:\n- ${ambiguities.join("\n- ")}`;
         if (!engagementRequest) {
           engagementRequest = this.requestHumanEngagement(
-            "Prompt contains ambiguities in intent or dependencies.",
+            "Prompt contains low-confidence intents requiring clarification.",
             EngagementMode.PROMPT_REFINEMENT,
             context,
             agentId,
@@ -305,10 +311,10 @@ export class FireKeeper {
           );
         } else {
           // Append to existing request context if present
-          engagementRequest.context += `\n\nAdditional Ambiguities:\n- ${intentResult.ambiguities.join("\n- ")}`;
+          engagementRequest.context += `\n\nLow-confidence intents:\n- ${ambiguities.join("\n- ")}`;
           engagementRequest.priority = Math.max(engagementRequest.priority, 0.7);
         }
-        this.promptDecompositionBridge?.logAmbiguityDetected(intentResult.ambiguities, parentSpanId);
+        this.promptDecompositionBridge?.logAmbiguityDetected(ambiguities, parentSpanId);
       }
     }
 

@@ -221,9 +221,9 @@ describe("ValueGate", () => {
     expect(constraints.length).toBe(4);
   });
 
-  it("evaluates all constraints and produces a verdict", () => {
+  it("evaluates all constraints and produces a verdict", async () => {
     const gate = new ValueGate();
-    const verdict = gate.evaluate({
+    const verdict = await gate.evaluate({
       action: "Add REST API endpoint",
       actionDescription: "Simple technical work",
       agentId: "agent_1",
@@ -238,9 +238,9 @@ describe("ValueGate", () => {
     expect(verdict.timestamp).toBeTruthy();
   });
 
-  it("blocks when Research Is Ceremony not gathered for Indigenous work", () => {
+  it("blocks when Research Is Ceremony not gathered for Indigenous work", async () => {
     const gate = new ValueGate();
-    const verdict = gate.evaluate({
+    const verdict = await gate.evaluate({
       action: "Design Indigenous ontology",
       actionDescription: "Create schema for medicine wheel relational models",
       agentId: "agent_1",
@@ -253,9 +253,9 @@ describe("ValueGate", () => {
     expect(verdict.failureSummary.length).toBeGreaterThan(0);
   });
 
-  it("allows when all constraints satisfied", () => {
+  it("allows when all constraints satisfied", async () => {
     const gate = new ValueGate();
-    const verdict = gate.evaluate({
+    const verdict = await gate.evaluate({
       action: "Add REST API endpoint for user data",
       actionDescription: "Simple CRUD endpoint",
       agentId: "agent_1",
@@ -267,9 +267,9 @@ describe("ValueGate", () => {
     expect(verdict.results.length).toBe(4);
   });
 
-  it("canProceed shortcut works", () => {
+  it("canProceed shortcut works", async () => {
     const gate = new ValueGate();
-    const result = gate.canProceed(
+    const result = await gate.canProceed(
       "Add a button",
       "UI component",
       "agent_1",
@@ -278,9 +278,9 @@ describe("ValueGate", () => {
     expect(typeof result).toBe("boolean");
   });
 
-  it("auto-generates wheel assessment when not provided", () => {
+  it("auto-generates wheel assessment when not provided", async () => {
     const gate = new ValueGate();
-    const verdict = gate.evaluate({
+    const verdict = await gate.evaluate({
       action: "Build the server",
       actionDescription: "Deploy infrastructure",
       agentId: "agent_1",

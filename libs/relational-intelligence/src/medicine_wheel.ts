@@ -305,7 +305,7 @@ Medicine Wheel Quadrants:
 
 Output your assessment as a JSON object matching the following Zod schema:
 
-${QuadrantPresenceSchema._getCssInJs().join("\n")}
+${JSON.stringify({ physical: "number (0-1)", emotional: "number (0-1)", mental: "number (0-1)", spiritual: "number (0-1)" }, null, 2)}
 
 Ensure the JSON is perfectly valid and can be directly parsed. Do not include any additional text outside the JSON object.
 `;

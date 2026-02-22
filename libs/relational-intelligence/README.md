@@ -279,6 +279,38 @@ If an agent only sees one quadrant, it is missing the rest of reality.
 | **Medicine Wheel Balance** | Warning | Warns when quadrants are neglected |
 | **Implicit Over Explicit** | Warning | Flags when values are overridden by technical asks |
 
+## Complete Workflow Example
+
+The `accountability-routing` example demonstrates end-to-end integration: a FireKeeper gates each agent action and a LangGraph-style state machine routes the session through the accountability lifecycle.
+
+```typescript
+// See examples/src/accountability-routing/agent_session_router.ts
+import { FireKeeper, ValueGate } from "ava-langchain-relational-intelligence";
+import { parseStateMachineSpec } from "ava-langchain-state-machine-spec";
+import spec from "./accountability_spec.json" assert { type: "json" };
+
+// 1. Parse and validate the state machine specification
+const machine = parseStateMachineSpec(spec);
+
+// 2. Initialise a FireKeeper with the session vision
+const keeper = new FireKeeper("Research relational AI architectures with care.");
+
+// 3. Gate every action through the FireKeeper before advancing state
+const review = keeper.processPrompt("Retrieve relevant papers from the knowledge graph");
+if (!review.accepted) {
+  throw new Error(`FireKeeper blocked: ${review.feedback}`);
+}
+if (review.requiresHumanEngagement) {
+  console.log("Human engagement requested:", review.feedback);
+}
+
+// 4. Advance the state machine only when the FireKeeper approves
+const transition = machine.states[machine.initialState].allowedTransitions[0];
+console.log(`Advancing to: ${transition}`);
+```
+
+See [`examples/src/accountability-routing/`](../../examples/src/accountability-routing/) for the full runnable example.
+
 ## Integration with ava-langgraphjs
 
 These components are designed to be consumed by the LangGraph Narrative Intelligence Toolkit:

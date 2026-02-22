@@ -46,9 +46,9 @@ describe("createLiminalInput", () => {
 
 describe("LiminalBuffer", () => {
   describe("capture", () => {
-    it("captures a liminal input", () => {
+    it("captures a liminal input", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture(
+      const input = await buffer.capture(
         "The knowledge graph should be alive, not flat",
         LiminalMode.HYPNAGOGIC,
         "session_1"
@@ -61,9 +61,9 @@ describe("LiminalBuffer", () => {
       expect(buffer.size).toBe(1);
     });
 
-    it("creates importance unit with dream source connection", () => {
+    it("creates importance unit with dream source connection", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture(
+      const input = await buffer.capture(
         "Spirit showed the way",
         LiminalMode.DREAM_RECALL,
         "s1"
@@ -77,9 +77,9 @@ describe("LiminalBuffer", () => {
       expect(dreamString!.strength).toBe(0.9);
     });
 
-    it("creates importance unit with vision source connection", () => {
+    it("creates importance unit with vision source connection", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture(
+      const input = await buffer.capture(
         "The direction became clear",
         LiminalMode.CONTEMPLATIVE,
         "s1"
@@ -92,9 +92,9 @@ describe("LiminalBuffer", () => {
       expect(visionString).toBeTruthy();
     });
 
-    it("attaches source file when provided", () => {
+    it("attaches source file when provided", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture(
+      const input = await buffer.capture(
         "Recording content",
         LiminalMode.HYPNAGOGIC,
         "s1",
@@ -106,36 +106,36 @@ describe("LiminalBuffer", () => {
   });
 
   describe("get and getAll", () => {
-    it("retrieves by ID", () => {
+    it("retrieves by ID", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture("test", LiminalMode.HYPNAGOGIC, "s1");
+      const input = await buffer.capture("test", LiminalMode.HYPNAGOGIC, "s1");
       expect(buffer.get(input.id)).toBe(input);
     });
 
-    it("filters by mode", () => {
+    it("filters by mode", async () => {
       const buffer = new LiminalBuffer();
-      buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
-      buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
-      buffer.capture("c", LiminalMode.HYPNAGOGIC, "s1");
+      await buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
+      await buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
+      await buffer.capture("c", LiminalMode.HYPNAGOGIC, "s1");
 
       const hypnagogic = buffer.getAll({ mode: LiminalMode.HYPNAGOGIC });
       expect(hypnagogic).toHaveLength(2);
     });
 
-    it("filters by integration status", () => {
+    it("filters by integration status", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
-      buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
+      const input = await buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
+      await buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
       buffer.markIntegrated(input.id);
 
       const unintegrated = buffer.getAll({ integrated: false });
       expect(unintegrated).toHaveLength(1);
     });
 
-    it("filters by minimum weight", () => {
+    it("filters by minimum weight", async () => {
       const buffer = new LiminalBuffer();
-      buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1"); // 1.5
-      buffer.capture("b", LiminalMode.SPONTANEOUS, "s1"); // 1.2
+      await buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1"); // 1.5
+      await buffer.capture("b", LiminalMode.SPONTANEOUS, "s1"); // 1.2
 
       const highWeight = buffer.getAll({ minWeight: 1.4 });
       expect(highWeight).toHaveLength(1);
@@ -143,21 +143,21 @@ describe("LiminalBuffer", () => {
   });
 
   describe("getRootContext", () => {
-    it("returns unintegrated inputs sorted by weight", () => {
+    it("returns unintegrated inputs sorted by weight", async () => {
       const buffer = new LiminalBuffer();
-      buffer.capture("low", LiminalMode.SPONTANEOUS, "s1"); // 1.2
-      buffer.capture("high", LiminalMode.HYPNAGOGIC, "s1"); // 1.5
-      buffer.capture("mid", LiminalMode.CONTEMPLATIVE, "s1"); // 1.3
+      await buffer.capture("low", LiminalMode.SPONTANEOUS, "s1"); // 1.2
+      await buffer.capture("high", LiminalMode.HYPNAGOGIC, "s1"); // 1.5
+      await buffer.capture("mid", LiminalMode.CONTEMPLATIVE, "s1"); // 1.3
 
       const root = buffer.getRootContext();
       expect(root[0].weight).toBe(1.5);
       expect(root[1].weight).toBe(1.3);
     });
 
-    it("excludes integrated inputs", () => {
+    it("excludes integrated inputs", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
-      buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
+      const input = await buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
+      await buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
       buffer.markIntegrated(input.id);
 
       const root = buffer.getRootContext();
@@ -166,15 +166,15 @@ describe("LiminalBuffer", () => {
   });
 
   describe("checkAlignment", () => {
-    it("checks alignment of technical work against liminal context", () => {
+    it("checks alignment of technical work against liminal context", async () => {
       const buffer = new LiminalBuffer();
-      buffer.capture(
+      await buffer.capture(
         "The system needs to be alive with ceremony and spirit and relationship",
         LiminalMode.HYPNAGOGIC,
         "s1"
       );
 
-      const result = buffer.checkAlignment(
+      const result = await buffer.checkAlignment(
         "Add flat JSON schema for knowledge graph"
       );
 
@@ -183,18 +183,18 @@ describe("LiminalBuffer", () => {
       expect(Array.isArray(result.supportingInputs)).toBe(true);
     });
 
-    it("returns aligned when no liminal context exists", () => {
+    it("returns aligned when no liminal context exists", async () => {
       const buffer = new LiminalBuffer();
-      const result = buffer.checkAlignment("Build anything");
+      const result = await buffer.checkAlignment("Build anything");
       expect(result.aligned).toBe(true);
       expect(result.conflicts).toHaveLength(0);
     });
   });
 
   describe("markIntegrated", () => {
-    it("marks input as integrated", () => {
+    it("marks input as integrated", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture("test", LiminalMode.HYPNAGOGIC, "s1");
+      const input = await buffer.capture("test", LiminalMode.HYPNAGOGIC, "s1");
 
       buffer.markIntegrated(input.id);
       expect(buffer.get(input.id)!.integrated).toBe(true);
@@ -203,9 +203,9 @@ describe("LiminalBuffer", () => {
   });
 
   describe("recordInfluence", () => {
-    it("increments influence count", () => {
+    it("increments influence count", async () => {
       const buffer = new LiminalBuffer();
-      const input = buffer.capture("test", LiminalMode.HYPNAGOGIC, "s1");
+      const input = await buffer.capture("test", LiminalMode.HYPNAGOGIC, "s1");
 
       buffer.recordInfluence(input.id);
       buffer.recordInfluence(input.id);
@@ -214,10 +214,10 @@ describe("LiminalBuffer", () => {
   });
 
   describe("getMostInfluential", () => {
-    it("returns inputs sorted by influence", () => {
+    it("returns inputs sorted by influence", async () => {
       const buffer = new LiminalBuffer();
-      const a = buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
-      const b = buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
+      const a = await buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
+      const b = await buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
 
       buffer.recordInfluence(a.id);
       buffer.recordInfluence(b.id);
@@ -230,10 +230,10 @@ describe("LiminalBuffer", () => {
   });
 
   describe("serialization", () => {
-    it("serializes and loads", () => {
+    it("serializes and loads", async () => {
       const buffer = new LiminalBuffer();
-      buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
-      buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
+      await buffer.capture("a", LiminalMode.HYPNAGOGIC, "s1");
+      await buffer.capture("b", LiminalMode.CEREMONIAL, "s1");
 
       const json = buffer.serialize();
       const buffer2 = new LiminalBuffer();
