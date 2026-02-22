@@ -220,6 +220,33 @@ Both `snake_case` and `camelCase` field names are accepted by the parser.
 
 This package optionally integrates with `ava-langchain-relational-intelligence` for Medicine Wheel assessment, value gating, and Fire Keeper coordination of state machine workflows.
 
+## Complete Workflow Example
+
+The `accountability-routing` example shows a FireKeeper coordinating a LangGraph-style state machine — every state transition is gated through relational accountability checks before the graph advances.
+
+```typescript
+// See examples/src/accountability-routing/agent_session_router.ts
+import { parseStateMachineSpec, validateStateMachineSpec } from "ava-langchain-state-machine-spec";
+import { FireKeeper } from "ava-langchain-relational-intelligence";
+import spec from "./accountability_spec.json" assert { type: "json" };
+
+// 1. Load and validate the spec
+const machine = parseStateMachineSpec(spec);
+const validation = validateStateMachineSpec(machine);
+if (!validation.valid) throw new Error(validation.errors.join(", "));
+
+// 2. FireKeeper gates every prompt before the graph advances
+const keeper = new FireKeeper("Build with relational care.");
+const review = keeper.processPrompt("Retrieve papers from knowledge graph");
+if (!review.accepted) throw new Error(`Blocked: ${review.feedback}`);
+
+// 3. Advance the state machine
+const next = machine.states[machine.initialState].allowedTransitions[0];
+console.log(`State: ${machine.initialState} → ${next}`);
+```
+
+See [`examples/src/accountability-routing/`](../../examples/src/accountability-routing/) for the full runnable example.
+
 ## License
 
 MIT
