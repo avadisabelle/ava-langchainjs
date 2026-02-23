@@ -100,6 +100,8 @@ export {
 
 export {
   ActionItem,
+  AmbiguityFlag,
+  ExpectedOutputs,
   DecompositionResult,
   ActionStackOptions,
   ActionStackBuilder,
@@ -132,6 +134,18 @@ export {
 } from "./v0_ontology_bridge.js";
 
 // =============================================================================
+// Storage (.pde/ persistence — mcp-pde lineage)
+// =============================================================================
+
+export {
+  StoredDecomposition,
+  saveDecomposition,
+  loadDecomposition,
+  listDecompositions,
+  decompositionToMarkdown,
+} from "./storage.js";
+
+// =============================================================================
 // LangChain Runnable Wrappers (Chain Composability)
 // =============================================================================
 
@@ -142,6 +156,17 @@ export {
   RunnableDecomposerOptions,
   RunnableDecomposerResult,
 } from "./runnable.js";
+
+// =============================================================================
+// Agent Harness Adapter (for ava-code, mia-code, etc.)
+// =============================================================================
+
+export {
+  AgentPDE,
+  AgentPDEOptions,
+  AgentDecompositionResult,
+  ExecutionProgress,
+} from "./agent_harness.js";
 
 // =============================================================================
 // Convenience: Full Pipeline
