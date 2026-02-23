@@ -347,6 +347,49 @@ Ensure the JSON is perfectly valid and can be directly parsed. Do not include an
       }
     }
 
+    // Pattern: hedging language implies implicit intent (from mcp-pde lineage)
+    // Detects: "I assume", "I expect", "you will need", "probably", "somehow", "should"
+    for (const sentence of sentences) {
+      const lower = sentence.toLowerCase();
+      if (explicitIntents.some((i) => i.sentence === sentence)) continue;
+      if (implicit.some((i) => i.sentence === sentence)) continue;
+
+      if (/i assume|which i assume|assuming/.test(lower)) {
+        implicit.push({
+          action: "investigate",
+          target: sentence,
+          confidence: 0.5,
+          implicit: true,
+          sentence,
+        });
+      } else if (/i expect|expecting|you will need/.test(lower)) {
+        implicit.push({
+          action: "investigate",
+          target: sentence,
+          confidence: 0.55,
+          implicit: true,
+          sentence,
+        });
+      } else if (/\bsomehow\b/.test(lower)) {
+        implicit.push({
+          action: "investigate",
+          target: sentence,
+          confidence: 0.4,
+          implicit: true,
+          sentence,
+        });
+      } else if (/\bprobably\b|\bshould\b(?!\s+not)/.test(lower) &&
+                 !explicitIntents.some((i) => i.sentence === sentence)) {
+        implicit.push({
+          action: "investigate",
+          target: sentence,
+          confidence: 0.45,
+          implicit: true,
+          sentence,
+        });
+      }
+    }
+
     return implicit;
   }
 
@@ -493,6 +536,17 @@ Ensure the JSON is perfectly valid and can be directly parsed. Do not include an
     let match;
     while ((match = toolPatterns.exec(prompt)) !== null) {
       toolsRequired.push(match[1]);
+    }
+
+    // Extract assumptions from hedging language (mcp-pde lineage)
+    const sentences = prompt.split(/(?<=[.!?])\s+|\n+/).filter((s) => s.length > 5);
+    for (const sentence of sentences) {
+      const lower = sentence.toLowerCase();
+      if (/i assume|i expect|i know that|which i assume|assuming that/.test(lower)) {
+        assumptions.push(sentence.trim());
+      } else if (/\bprobably\b|\bsomehow\b|\bshould\b/.test(lower) && lower.length < 200) {
+        assumptions.push(sentence.trim());
+      }
     }
 
     return { filesNeeded, toolsRequired, assumptions };

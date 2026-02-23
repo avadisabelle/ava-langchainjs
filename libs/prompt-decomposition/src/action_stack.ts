@@ -28,6 +28,19 @@ export interface ActionItem {
   implicit: boolean;
 }
 
+/** Structured ambiguity flag (mcp-pde lineage) */
+export interface AmbiguityFlag {
+  text: string;
+  suggestion: string;
+}
+
+/** Expected outputs from the decomposition (mcp-pde lineage) */
+export interface ExpectedOutputs {
+  artifacts: string[];
+  updates: string[];
+  communications: string[];
+}
+
 export interface DecompositionResult {
   id: string;
   timestamp: string;
@@ -44,12 +57,13 @@ export interface DecompositionResult {
     toolsRequired: string[];
     assumptions: string[];
   };
+  outputs: ExpectedOutputs;
   directions: Record<Direction, Array<{ text: string; confidence: number; implicit: boolean }>>;
   actionStack: ActionItem[];
   balance: number;
   leadDirection: Direction;
   neglectedDirections: Direction[];
-  ambiguities: string[];
+  ambiguities: AmbiguityFlag[];
 }
 
 export interface ActionStackOptions {
@@ -114,6 +128,7 @@ export class ActionStackBuilder {
       },
       secondary: intentResult.secondary,
       context: intentResult.context,
+      outputs: this.extractExpectedOutputs(intentResult),
       directions: {
         east: directionalAnalysis.directions.east?.map((i) => ({
           text: i.text,
@@ -162,6 +177,7 @@ export class ActionStackBuilder {
             tools_required: result.context.toolsRequired,
             assumptions: result.context.assumptions,
           },
+          outputs: result.outputs,
           directions: result.directions,
           actionStack: result.actionStack,
           ambiguities: result.ambiguities,
@@ -223,7 +239,29 @@ export class ActionStackBuilder {
     if (result.ambiguities.length > 0) {
       lines.push(`## ⚠️ Ambiguities`);
       for (const amb of result.ambiguities) {
-        lines.push(`- ${amb}`);
+        lines.push(`- **"${amb.text}"**`);
+        lines.push(`  - Suggestion: ${amb.suggestion}`);
+      }
+      lines.push("");
+    }
+
+    // Expected Outputs
+    if (result.outputs.artifacts.length || result.outputs.updates.length || result.outputs.communications.length) {
+      lines.push(`## 📦 Expected Outputs`);
+      if (result.outputs.artifacts.length) {
+        lines.push(`### Artifacts`);
+        result.outputs.artifacts.forEach((a) => lines.push(`- ${a}`));
+        lines.push("");
+      }
+      if (result.outputs.updates.length) {
+        lines.push(`### Updates`);
+        result.outputs.updates.forEach((u) => lines.push(`- ${u}`));
+        lines.push("");
+      }
+      if (result.outputs.communications.length) {
+        lines.push(`### Communications`);
+        result.outputs.communications.forEach((c) => lines.push(`- ${c}`));
+        lines.push("");
       }
     }
 
@@ -274,25 +312,68 @@ export class ActionStackBuilder {
   private detectAmbiguities(
     directionalAnalysis: DirectionalAnalysis,
     intentResult: IntentExtractionResult
-  ): string[] {
-    const ambiguities: string[] = [];
+  ): AmbiguityFlag[] {
+    const ambiguities: AmbiguityFlag[] = [];
 
     // Low confidence primary
     if (intentResult.primary.confidence < 0.5) {
-      ambiguities.push(
-        `Primary intent has low confidence (${(intentResult.primary.confidence * 100).toFixed(0)}%) — consider clarifying the main goal.`
-      );
+      ambiguities.push({
+        text: `Primary intent has low confidence (${(intentResult.primary.confidence * 100).toFixed(0)}%)`,
+        suggestion: "Clarify the main goal with a more specific action verb and target.",
+      });
     }
 
     // Neglected directions
     for (const dir of directionalAnalysis.neglectedDirections) {
-      ambiguities.push(
-        `Direction ${dir} is neglected — the prompt lacks ${dir === "east" ? "vision clarity" : dir === "south" ? "research context" : dir === "west" ? "validation criteria" : "actionable steps"}.`
-      );
+      const desc = dir === "east" ? "vision clarity" : dir === "south" ? "research context" : dir === "west" ? "validation criteria" : "actionable steps";
+      ambiguities.push({
+        text: `Direction ${dir} is neglected`,
+        suggestion: `The prompt lacks ${desc}. Consider addressing what is missing from this perspective.`,
+      });
     }
 
-    // Circular dependencies would be caught by DependencyMapper
+    // Hedging language in prompt → ambiguity flags
+    const lower = intentResult.prompt.toLowerCase();
+    if (/\bsomehow\b/.test(lower)) {
+      ambiguities.push({
+        text: `"somehow" — method left unspecified`,
+        suggestion: "Specify the approach or method to use.",
+      });
+    }
+    if (/\bprobably\b|\bmaybe\b|\bperhaps\b/.test(lower)) {
+      ambiguities.push({
+        text: `Hedging language detected ("probably", "maybe", "perhaps")`,
+        suggestion: "Confirm or deny the hedged assumptions before proceeding.",
+      });
+    }
 
     return ambiguities;
+  }
+
+  private extractExpectedOutputs(
+    intentResult: IntentExtractionResult
+  ): ExpectedOutputs {
+    const artifacts: string[] = [];
+    const updates: string[] = [];
+    const communications: string[] = [];
+
+    for (const intent of intentResult.secondary) {
+      if (["create", "add"].includes(intent.action)) {
+        artifacts.push(intent.target);
+      } else if (["modify", "use"].includes(intent.action)) {
+        updates.push(intent.target);
+      } else if (["deploy", "draft"].includes(intent.action)) {
+        communications.push(intent.target);
+      }
+    }
+
+    // Primary also contributes
+    if (["create", "add"].includes(intentResult.primary.action)) {
+      artifacts.push(intentResult.primary.target);
+    } else if (["modify"].includes(intentResult.primary.action)) {
+      updates.push(intentResult.primary.target);
+    }
+
+    return { artifacts, updates, communications };
   }
 }
