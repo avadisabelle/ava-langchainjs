@@ -198,56 +198,79 @@ export class ActionStackBuilder {
   toMarkdown(result: DecompositionResult): string {
     const lines: string[] = [];
 
-    lines.push(`# 🧭 Prompt Decomposition`);
-    lines.push("");
-    lines.push(`**Primary Intent:** ${result.primary.action} → ${result.primary.target}`);
-    lines.push(`**Urgency:** ${result.primary.urgency} | **Confidence:** ${(result.primary.confidence * 100).toFixed(0)}%`);
-    lines.push(`**Balance:** ${(result.balance * 100).toFixed(0)}% | **Lead:** ${result.leadDirection}`);
+    lines.push(`# Prompt Decomposition`);
     lines.push("");
 
-    // Directions
+    // Four Directions (canonical container)
+    lines.push(`## Four Directions`);
+    lines.push("");
+
     const dirEmoji: Record<string, string> = {
       east: "🌅",
       south: "🔥",
       west: "🌊",
       north: "❄️",
     };
+    const dirSubtitle: Record<string, string> = {
+      east: "Vision",
+      south: "Analysis",
+      west: "Validation",
+      north: "Action",
+    };
 
     for (const dir of ["east", "south", "west", "north"] as Direction[]) {
       const insights = result.directions[dir];
       if (insights.length > 0) {
-        lines.push(`## ${dirEmoji[dir]} ${dir.toUpperCase()}`);
+        lines.push(`### ${dirEmoji[dir]} ${dir.toUpperCase()} — ${dirSubtitle[dir]}`);
         for (const insight of insights) {
           const tag = insight.implicit ? " _(implicit)_" : "";
-          lines.push(`- ${insight.text}${tag} [${(insight.confidence * 100).toFixed(0)}%]`);
+          lines.push(`- ${insight.text} [${(insight.confidence * 100).toFixed(0)}%]${tag}`);
         }
         lines.push("");
       }
     }
 
-    // Action Stack
-    lines.push(`## 📋 Action Stack`);
-    for (const action of result.actionStack) {
-      const check = action.completed ? "x" : " ";
-      const dep = action.dependency ? ` → depends on: ${action.dependency}` : "";
-      const tag = action.implicit ? " _(implicit)_" : "";
-      lines.push(`- [${check}] [${action.direction}] ${action.text}${tag}${dep}`);
-    }
+    // Primary Intent
+    lines.push(`## Primary Intent`);
+    lines.push(`**Action:** ${result.primary.action} → ${result.primary.target}`);
+    lines.push(`**Urgency:** ${result.primary.urgency} | **Confidence:** ${(result.primary.confidence * 100).toFixed(0)}%`);
+    lines.push(`**Balance:** ${(result.balance * 100).toFixed(0)}% | **Lead:** ${result.leadDirection}`);
     lines.push("");
 
-    // Ambiguities
-    if (result.ambiguities.length > 0) {
-      lines.push(`## ⚠️ Ambiguities`);
-      for (const amb of result.ambiguities) {
-        lines.push(`- **"${amb.text}"**`);
-        lines.push(`  - Suggestion: ${amb.suggestion}`);
+    // Secondary Intents
+    if (result.secondary.length > 0) {
+      lines.push(`## Secondary Intents`);
+      for (const s of result.secondary) {
+        const tag = s.implicit ? " _(implicit)_" : "";
+        const dep = s.dependency ? ` → depends on: ${s.dependency}` : "";
+        lines.push(`- ${s.action} → ${s.target} [${(s.confidence * 100).toFixed(0)}%]${tag}${dep}`);
       }
       lines.push("");
     }
 
+    // Context Requirements
+    if (result.context.filesNeeded.length || result.context.toolsRequired.length || result.context.assumptions.length) {
+      lines.push(`## Context Requirements`);
+      if (result.context.filesNeeded.length) {
+        lines.push(`### Files Needed`);
+        result.context.filesNeeded.forEach((f) => lines.push(`- ${f}`));
+        lines.push("");
+      }
+      if (result.context.toolsRequired.length) {
+        lines.push(`### Tools Required`);
+        result.context.toolsRequired.forEach((t) => lines.push(`- ${t}`));
+        lines.push("");
+      }
+      if (result.context.assumptions.length) {
+        lines.push(`### Assumptions`);
+        result.context.assumptions.forEach((a) => lines.push(`- ${a}`));
+        lines.push("");
+      }
+    }
+
     // Expected Outputs
     if (result.outputs.artifacts.length || result.outputs.updates.length || result.outputs.communications.length) {
-      lines.push(`## 📦 Expected Outputs`);
+      lines.push(`## Expected Outputs`);
       if (result.outputs.artifacts.length) {
         lines.push(`### Artifacts`);
         result.outputs.artifacts.forEach((a) => lines.push(`- ${a}`));
@@ -263,6 +286,26 @@ export class ActionStackBuilder {
         result.outputs.communications.forEach((c) => lines.push(`- ${c}`));
         lines.push("");
       }
+    }
+
+    // Action Stack
+    lines.push(`## Action Stack`);
+    for (const action of result.actionStack) {
+      const check = action.completed ? "x" : " ";
+      const dep = action.dependency ? ` → depends on: ${action.dependency}` : "";
+      const tag = action.implicit ? " _(implicit)_" : "";
+      lines.push(`- [${check}] [${action.direction}] ${action.text}${tag}${dep}`);
+    }
+    lines.push("");
+
+    // Ambiguity Flags
+    if (result.ambiguities.length > 0) {
+      lines.push(`## Ambiguity Flags`);
+      for (const amb of result.ambiguities) {
+        lines.push(`- **"${amb.text}"**`);
+        lines.push(`  - Suggestion: ${amb.suggestion}`);
+      }
+      lines.push("");
     }
 
     return lines.join("\n");
