@@ -45,6 +45,8 @@
     "@langchain/community": "workspace:*",
     "ava-langchain-state-machine-spec": "workspace:*",
     "ava-langchain-relational-intelligence": "workspace:*",
+    "ava-langchain-narrative-tracing": "workspace:*",
+    "ava-langchain-prompt-decomposition": "workspace:*",
     "@langchain/core": "workspace:^",
     "@langchain/deepseek": "workspace:*",
     "@langchain/exa": "workspace:*",

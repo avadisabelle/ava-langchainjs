@@ -14,6 +14,49 @@ If you're looking for more advanced customization or agent orchestration, check 
 To help you ship LangChain apps to production faster, check out [LangSmith](https://smith.langchain.com).
 [LangSmith](https://smith.langchain.com) is a unified developer platform for building, testing, and monitoring LLM applications.
 
+## 🌿 AvaLangStack — Custom Libraries
+
+This fork includes custom libraries for the **AvaLangStack Narrative Intelligence ecosystem**:
+
+| Package | Description |
+|---------|-------------|
+| `ava-langchain-prompt-decomposition` | Four Directions PDE primitives — decomposes prompts through Medicine Wheel directions |
+| `ava-langchain-inquiry-routing` | Inquiry routing with directional classification and confidence scoring |
+| `ava-langchain-relational-intelligence` | Indigenous relational paradigm — MedicineWheelFilter, StructuralTensionChain, FireKeeper |
+| `ava-langchain-narrative-tracing` | Langfuse-based narrative observability with EpisodeBundler and PolyphonicParser |
+| `ava-langchain-state-machine-spec` | Declarative workflow specs with accountability-as-routing |
+
+### Key Design Principles
+
+- **Zero LLM dependency** — all primitives use keyword-based analysis, not model calls
+- **Four Directions as control flow** — EAST (vision) → SOUTH (planning) → WEST (action) → NORTH (reflection)
+- **Structural tension as routing signal** — the gap between current reality and desired outcome drives workflow
+- **Ceremony gating** — some operations require explicit consent or ceremony before proceeding
+
+### Quick Example
+
+```typescript
+import { StructuralTensionChain } from "ava-langchain-relational-intelligence";
+import { decompose } from "ava-langchain-prompt-decomposition";
+
+// Evaluate structural tension
+const chain = new StructuralTensionChain();
+const vector = chain.evaluate(
+  "Monolith with no tests, team works in silos",
+  "Microservices with full coverage, daily ceremonies"
+);
+console.log(`Tension magnitude: ${vector.magnitude}`);
+console.log(`Direction: ${vector.direction}`);
+
+// Decompose a complex prompt
+const result = await decompose("Build a knowledge graph with ceremony gating...");
+console.log(result.markdown);
+```
+
+See [examples/src/avalangstack/](examples/src/avalangstack/) for complete demonstrations.
+
+> **Consumer**: These chain primitives are consumed by [ava-langgraphjs](https://github.com/avadisabelle/ava-langgraphjs) which wraps them in StateGraph pipelines.
+
 ## ⚡️ Quick Install
 
 You can use npm, pnpm, or yarn to install LangChain.js
