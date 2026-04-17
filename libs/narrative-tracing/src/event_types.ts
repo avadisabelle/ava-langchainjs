@@ -43,6 +43,30 @@ export enum NarrativeEventType {
   // Checkpoint events
   NARRATIVE_CHECKPOINT = "narrative.checkpoint",
   EPISODE_BOUNDARY = "narrative.episode.boundary",
+
+  // Prompt Decomposition Engine (PDE) events
+  PROMPT_DECOMPOSITION_STARTED = "pde.decomposition.started",
+  DIRECTIONAL_ANALYSIS_PERFORMED = "pde.directional.analysis",
+  INTENT_EXTRACTION_PERFORMED = "pde.intent.extraction",
+  DEPENDENCY_GRAPH_BUILT = "pde.dependency.graph_built",
+  ACTION_STACK_BUILT = "pde.action_stack.built",
+  AMBIGUITY_DETECTED = "pde.ambiguity.detected",
+  MEDICINE_WHEEL_ASSESSMENT = "pde.medicine_wheel.assessment",
+
+  // Relational Intelligence (RI) events
+  WHEEL_ASSESSMENT_PERFORMED = "ri.wheel.assessment_performed",
+  IMPORTANCE_UNIT_CREATED = "ri.importance.unit_created",
+  IMPORTANCE_UNIT_DEEPENED = "ri.importance.unit_deepened",
+  IMPORTANCE_UNIT_DECAYED = "ri.importance.unit_decayed",
+  VALUE_CONFLICT_DETECTED = "ri.value.conflict_detected",
+  SPIRAL_CIRCLE_RECORDED = "ri.epistemic.spiral_circle_recorded",
+  SPIRAL_SHIFT_ANALYZED = "ri.epistemic.spiral_shift_analyzed",
+  VALUE_GATE_VERDICT_ISSUED = "ri.value.gate_verdict_issued",
+  HUMAN_ENGAGEMENT_REQUESTED = "ri.human_engagement.requested",
+  HUMAN_ENGAGEMENT_RESOLVED = "ri.human_engagement.resolved",
+  RELATIONAL_MILESTONE_RECORDED = "ri.milestone.recorded",
+  LIMINAL_INPUT_CAPTURED = "ri.liminal.input_captured",
+  LIMINAL_INPUT_ALIGNMENT_CHECKED = "ri.liminal.alignment_checked",
 }
 
 /**
@@ -68,6 +92,27 @@ export const EVENT_GLYPHS: Record<NarrativeEventType, string> = {
   [NarrativeEventType.GAP_REMEDIATED]: "🔧",
   [NarrativeEventType.NARRATIVE_CHECKPOINT]: "💾",
   [NarrativeEventType.EPISODE_BOUNDARY]: "📍",
+  [NarrativeEventType.PROMPT_DECOMPOSITION_STARTED]: "▶️",
+  [NarrativeEventType.DIRECTIONAL_ANALYSIS_PERFORMED]: "🧭",
+  [NarrativeEventType.INTENT_EXTRACTION_PERFORMED]: "💡",
+  [NarrativeEventType.DEPENDENCY_GRAPH_BUILT]: "🌳",
+  [NarrativeEventType.ACTION_STACK_BUILT]: "✅",
+  [NarrativeEventType.AMBIGUITY_DETECTED]: "❓",
+  [NarrativeEventType.MEDICINE_WHEEL_ASSESSMENT]: "☸️",
+
+  [NarrativeEventType.WHEEL_ASSESSMENT_PERFORMED]: "⭕",
+  [NarrativeEventType.IMPORTANCE_UNIT_CREATED]: "✨",
+  [NarrativeEventType.IMPORTANCE_UNIT_DEEPENED]: "🌱",
+  [NarrativeEventType.IMPORTANCE_UNIT_DECAYED]: "🍂",
+  [NarrativeEventType.VALUE_CONFLICT_DETECTED]: "⚔️",
+  [NarrativeEventType.SPIRAL_CIRCLE_RECORDED]: "🌀",
+  [NarrativeEventType.SPIRAL_SHIFT_ANALYZED]: "🌊",
+  [NarrativeEventType.VALUE_GATE_VERDICT_ISSUED]: "🛑",
+  [NarrativeEventType.HUMAN_ENGAGEMENT_REQUESTED]: "🗣️",
+  [NarrativeEventType.HUMAN_ENGAGEMENT_RESOLVED]: "🤝",
+  [NarrativeEventType.RELATIONAL_MILESTONE_RECORDED]: "📍",
+  [NarrativeEventType.LIMINAL_INPUT_CAPTURED]: "🌙",
+  [NarrativeEventType.LIMINAL_INPUT_ALIGNMENT_CHECKED]: "⚖️",
 };
 
 /**

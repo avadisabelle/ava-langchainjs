@@ -1,5 +1,58 @@
 # @langchain/google-common
 
+## 2.1.19
+
+### Patch Changes
+
+- [#10078](https://github.com/langchain-ai/langchainjs/pull/10078) [`7be50a7`](https://github.com/langchain-ai/langchainjs/commit/7be50a7014d7622e0ab8d303dfc9c633ebc96333) Thanks [@christian-bromann](https://github.com/christian-bromann)! - chore(\*): update model profiles
+
+- Updated dependencies [[`27186c5`](https://github.com/langchain-ai/langchainjs/commit/27186c54884cfe7c2522fa50b42c3ca0ccaefdba), [`05396f7`](https://github.com/langchain-ai/langchainjs/commit/05396f7ce0a91c49a3bae4bbcd3dbdd6cbd18089), [`5a6f26b`](https://github.com/langchain-ai/langchainjs/commit/5a6f26bbaed80195dc538c538b96219a8b03f38f)]:
+  - @langchain/core@1.1.25
+
+## 2.1.18
+
+### Patch Changes
+
+- [#9948](https://github.com/langchain-ai/langchainjs/pull/9948) [`58c00aa`](https://github.com/langchain-ai/langchainjs/commit/58c00aa51994e421741c88f51f6e9d2726433a03) Thanks [@aditya-gg04](https://github.com/aditya-gg04)! - support input_audio content for Gemini
+
+- Updated dependencies [[`71d08c0`](https://github.com/langchain-ai/langchainjs/commit/71d08c0a3a2597bd5a084eb35a7830e5ea1a2b29)]:
+  - @langchain/core@1.1.23
+
+## 2.1.17
+
+### Patch Changes
+
+- [#9985](https://github.com/langchain-ai/langchainjs/pull/9985) [`e2ed407`](https://github.com/langchain-ai/langchainjs/commit/e2ed40729c54d132b91b7abecfb787fe5f09461e) Thanks [@turnerdev](https://github.com/turnerdev)! - Set the correct `_llmType` for Google models
+
+- Updated dependencies [[`d5e3db0`](https://github.com/langchain-ai/langchainjs/commit/d5e3db0d01ab321ec70a875805b2f74aefdadf9d)]:
+  - @langchain/core@1.1.21
+
+## 2.1.16
+
+### Patch Changes
+
+- [#9973](https://github.com/langchain-ai/langchainjs/pull/9973) [`5681181`](https://github.com/langchain-ai/langchainjs/commit/568118119f44cc4509a2c04dff2891230e874f46) Thanks [@hntrl](https://github.com/hntrl)! - fix(google-common): surface actual API error when GAuthClient's gaxios throws for non-2xx responses
+
+  Previously, when `GAuthClient._fetch` (via `google-auth-library`/gaxios) threw a `GaxiosError` for non-2xx
+  responses, the error bypassed `_request()`'s `!res.ok` formatting and propagated with an empty/undefined
+  message. Users saw "undefined" in their traces instead of the actual Google API error. This was particularly
+  impactful for `image_url`/`fileData` content where Gemini returns descriptive errors like
+  "Cannot fetch content from the provided URL" when it can't access the image.
+
+  The fix wraps `_fetch()` in a try/catch that extracts the status and response body from the thrown error and
+  re-throws with the same well-formatted message used by the existing `!res.ok` path. Both paths now funnel
+  through a shared `_throwRequestError()` helper.
+
+- Updated dependencies [[`71c3cba`](https://github.com/langchain-ai/langchainjs/commit/71c3cba843ab16d877299d158a1de0c7d22f3fb9)]:
+  - @langchain/core@1.1.20
+
+## 2.1.15
+
+### Patch Changes
+
+- Updated dependencies [[`41bfea5`](https://github.com/langchain-ai/langchainjs/commit/41bfea51cf119573a3b956ee782d2731fe71c681)]:
+  - @langchain/core@1.1.19
+
 ## 2.1.14
 
 ### Patch Changes

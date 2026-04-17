@@ -167,7 +167,8 @@ export class ChatConnection<AuthOptions> extends AbstractGoogleLLMConnection<
  * Input to chat model class.
  */
 export interface ChatGoogleBaseInput<AuthOptions>
-  extends BaseChatModelParams,
+  extends
+    BaseChatModelParams,
     GoogleConnectionParams<AuthOptions>,
     GoogleAIModelParams,
     GoogleAISafetyParams,
@@ -322,9 +323,8 @@ export abstract class ChatGoogleBase<AuthOptions>
     return this.withConfig({ tools: convertToGeminiTools(tools), ...kwargs });
   }
 
-  // Replace
   _llmType() {
-    return "chat_integration";
+    return "google";
   }
 
   /**

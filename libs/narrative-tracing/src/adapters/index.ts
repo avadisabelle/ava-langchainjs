@@ -41,3 +41,13 @@ export {
   StorytellingHooksOptions,
   createBeatInfo,
 } from "./storytelling_hooks.js";
+
+export {
+  PromptDecompositionBridge,
+  PromptDecompositionBridgeOptions,
+} from "./prompt_decomposition_bridge.js";
+
+export {
+  RelationalIntelligenceBridge,
+  RelationalIntelligenceBridgeOptions,
+} from "./relational_intelligence_bridge.js";

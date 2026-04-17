@@ -40,6 +40,8 @@
     { "path": "../libs/providers/langchain-tavily" },
     { "path": "../libs/providers/langchain-weaviate" },
     { "path": "../libs/providers/langchain-xai" },
-    { "path": "../libs/providers/langchain-yandex" }
+    { "path": "../libs/providers/langchain-yandex" },
+    { "path": "../libs/state-machine-spec" },
+    { "path": "../libs/relational-intelligence" }
   ]
 }

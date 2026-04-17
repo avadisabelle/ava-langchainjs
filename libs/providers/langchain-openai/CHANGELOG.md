@@ -1,5 +1,58 @@
 # @langchain/openai
 
+## 1.2.8
+
+### Patch Changes
+
+- [#10077](https://github.com/langchain-ai/langchainjs/pull/10077) [`05396f7`](https://github.com/langchain-ai/langchainjs/commit/05396f7ce0a91c49a3bae4bbcd3dbdd6cbd18089) Thanks [@christian-bromann](https://github.com/christian-bromann)! - feat(core): add ContextOverflowError, raise in anthropic and openai
+
+- [#10081](https://github.com/langchain-ai/langchainjs/pull/10081) [`5a6f26b`](https://github.com/langchain-ai/langchainjs/commit/5a6f26bbaed80195dc538c538b96219a8b03f38f) Thanks [@hntrl](https://github.com/hntrl)! - feat(core): add namespace-based symbol branding for error class hierarchies
+
+  Introduces `createNamespace` utility for hierarchical symbol-based branding of class hierarchies.
+  All LangChain error classes now use this pattern, replacing hand-rolled duck-type `isInstance` checks
+  with reliable cross-realm `Symbol.for`-based identity.
+  - New `LangChainError` base class that all LangChain errors extend
+  - New `createNamespace` / `Namespace` API in `@langchain/core/utils/namespace`
+  - Refactored `ModelAbortError`, `ContextOverflowError` to use namespace branding
+  - Added `ContextOverflowError.fromError()` static factory method
+  - Deprecated `addLangChainErrorFields` in favor of `LangChainError` subclasses
+  - Migrated Google provider errors (`GoogleError`, `ConfigurationError`, etc.) to namespace branding
+  - Updated Anthropic and OpenAI providers to use `ContextOverflowError.fromError()`
+
+- [#10078](https://github.com/langchain-ai/langchainjs/pull/10078) [`7be50a7`](https://github.com/langchain-ai/langchainjs/commit/7be50a7014d7622e0ab8d303dfc9c633ebc96333) Thanks [@christian-bromann](https://github.com/christian-bromann)! - chore(\*): update model profiles
+
+## 1.2.7
+
+### Patch Changes
+
+- [#9954](https://github.com/langchain-ai/langchainjs/pull/9954) [`6939dab`](https://github.com/langchain-ai/langchainjs/commit/6939dabc8dc6481942e7e2c19e3dc61bc374d65a) Thanks [@akintunero](https://github.com/akintunero)! - fix(openai): store response.output in response_metadata for reasoning model round-trips
+
+- [#9898](https://github.com/langchain-ai/langchainjs/pull/9898) [`ad581c7`](https://github.com/langchain-ai/langchainjs/commit/ad581c76138ea12ebdaee444c0dcdc4f6a280624) Thanks [@Muhammad-Kamran-Khan](https://github.com/Muhammad-Kamran-Khan)! - fix(openai): pass service_tier to API when using Responses API
+
+## 1.2.6
+
+### Patch Changes
+
+- [#9972](https://github.com/langchain-ai/langchainjs/pull/9972) [`16d691c`](https://github.com/langchain-ai/langchainjs/commit/16d691c7f8196e1d6322f051c25b2219ff2953b6) Thanks [@hntrl](https://github.com/hntrl)! - fix(openai): drop Anthropic `tool_use` content blocks when converting messages for OpenAI
+
+  When messages originating from Anthropic (e.g. via `ChatAnthropic`) are passed to `ChatOpenAI`, Anthropic-native `tool_use` blocks in `message.content` are now filtered out during conversion. These blocks are already represented in `message.tool_calls` and would cause an OpenAI API error if passed through.
+
+- [#9940](https://github.com/langchain-ai/langchainjs/pull/9940) [`1058574`](https://github.com/langchain-ai/langchainjs/commit/1058574b723f0d060eb9b3ca25be5aeeabbe51aa) Thanks [@saakshigupta2002](https://github.com/saakshigupta2002)! - fix(openai): correctly convert annotations back to OpenAI format in Responses API multi-turn conversations
+
+## 1.2.5
+
+### Patch Changes
+
+- [#9743](https://github.com/langchain-ai/langchainjs/pull/9743) [`0870ca0`](https://github.com/langchain-ai/langchainjs/commit/0870ca0719dacd8a555b3341e581d6c15cd6faf3) Thanks [@d2201](https://github.com/d2201)! - fix(openai): include encrypted reasoning in ZDR responses input
+
+- [#9934](https://github.com/langchain-ai/langchainjs/pull/9934) [`cf46089`](https://github.com/langchain-ai/langchainjs/commit/cf46089d250b1ec87f99956f5cd87e2615ac25c5) Thanks [@hntrl](https://github.com/hntrl)! - feat(openai): update openai SDK to ^6.18.0
+  - Adds support for codex 5.3
+  - Added `action` option to image generation tool (`generate`, `edit`, `auto`)
+  - Removed `@ts-expect-error` for `gpt-image-1.5` model (now in SDK types)
+  - Auto-route codex models (`codex-mini-latest`, `gpt-5-codex`, `gpt-5.1-codex`, etc.) to Responses API
+  - Added `shell_call` and `local_shell_call` to streaming converter and input reconstruction
+  - Added unit tests for `isReasoningModel` and `_modelPrefersResponsesAPI`
+
 ## 1.2.4
 
 ### Patch Changes

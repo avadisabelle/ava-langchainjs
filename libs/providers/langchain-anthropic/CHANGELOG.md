@@ -1,5 +1,66 @@
 # @langchain/anthropic
 
+## 1.3.18
+
+### Patch Changes
+
+- [#10077](https://github.com/langchain-ai/langchainjs/pull/10077) [`05396f7`](https://github.com/langchain-ai/langchainjs/commit/05396f7ce0a91c49a3bae4bbcd3dbdd6cbd18089) Thanks [@christian-bromann](https://github.com/christian-bromann)! - feat(core): add ContextOverflowError, raise in anthropic and openai
+
+- [#10081](https://github.com/langchain-ai/langchainjs/pull/10081) [`5a6f26b`](https://github.com/langchain-ai/langchainjs/commit/5a6f26bbaed80195dc538c538b96219a8b03f38f) Thanks [@hntrl](https://github.com/hntrl)! - feat(core): add namespace-based symbol branding for error class hierarchies
+
+  Introduces `createNamespace` utility for hierarchical symbol-based branding of class hierarchies.
+  All LangChain error classes now use this pattern, replacing hand-rolled duck-type `isInstance` checks
+  with reliable cross-realm `Symbol.for`-based identity.
+  - New `LangChainError` base class that all LangChain errors extend
+  - New `createNamespace` / `Namespace` API in `@langchain/core/utils/namespace`
+  - Refactored `ModelAbortError`, `ContextOverflowError` to use namespace branding
+  - Added `ContextOverflowError.fromError()` static factory method
+  - Deprecated `addLangChainErrorFields` in favor of `LangChainError` subclasses
+  - Migrated Google provider errors (`GoogleError`, `ConfigurationError`, etc.) to namespace branding
+  - Updated Anthropic and OpenAI providers to use `ContextOverflowError.fromError()`
+
+- [#10078](https://github.com/langchain-ai/langchainjs/pull/10078) [`7be50a7`](https://github.com/langchain-ai/langchainjs/commit/7be50a7014d7622e0ab8d303dfc9c633ebc96333) Thanks [@christian-bromann](https://github.com/christian-bromann)! - chore(\*): update model profiles
+
+- Updated dependencies [[`27186c5`](https://github.com/langchain-ai/langchainjs/commit/27186c54884cfe7c2522fa50b42c3ca0ccaefdba), [`05396f7`](https://github.com/langchain-ai/langchainjs/commit/05396f7ce0a91c49a3bae4bbcd3dbdd6cbd18089), [`5a6f26b`](https://github.com/langchain-ai/langchainjs/commit/5a6f26bbaed80195dc538c538b96219a8b03f38f)]:
+  - @langchain/core@1.1.25
+
+## 1.3.17
+
+### Patch Changes
+
+- [#9991](https://github.com/langchain-ai/langchainjs/pull/9991) [`dca939d`](https://github.com/langchain-ai/langchainjs/commit/dca939dee687b2a0a0a56dfbb1677ab2cd1ceb62) Thanks [@nickwinder](https://github.com/nickwinder)! - fix(anthropic): update MODEL_DEFAULT_MAX_OUTPUT_TOKENS with correct values for all Claude models
+
+- Updated dependencies [[`d5e3db0`](https://github.com/langchain-ai/langchainjs/commit/d5e3db0d01ab321ec70a875805b2f74aefdadf9d)]:
+  - @langchain/core@1.1.21
+
+## 1.3.16
+
+### Patch Changes
+
+- Updated dependencies [[`71c3cba`](https://github.com/langchain-ai/langchainjs/commit/71c3cba843ab16d877299d158a1de0c7d22f3fb9)]:
+  - @langchain/core@1.1.20
+
+## 1.3.15
+
+### Patch Changes
+
+- [#9932](https://github.com/langchain-ai/langchainjs/pull/9932) [`4f7f9c7`](https://github.com/langchain-ai/langchainjs/commit/4f7f9c77a42d361d995c938f79772801cd429a9f) Thanks [@hntrl](https://github.com/hntrl)! - feat(anthropic): add Claude Opus 4.6 support with adaptive thinking, effort parameter, compaction API, output_config migration, inference_geo, and structured outputs GA
+  - Upgrade `@anthropic-ai/sdk` from `^0.71.0` to `^0.73.0`
+  - Add `claude-opus-4-6` model with 16384 default max output tokens
+  - Support adaptive thinking (`thinking: { type: "adaptive" }`) recommended for Opus 4.6
+  - Add `outputConfig` parameter with effort levels (`low`, `medium`, `high`, `max`) for controlling token usage
+  - Migrate `outputFormat` to `outputConfig.format` (backwards compatible, `outputFormat` deprecated)
+  - Add compaction API support (beta) with auto-detection of `compact_20260112` edits and streaming handlers for compaction content blocks
+  - Add `inferenceGeo` parameter for data residency controls
+  - Remove structured-outputs beta header requirement (now GA)
+
+## 1.3.14
+
+### Patch Changes
+
+- Updated dependencies [[`41bfea5`](https://github.com/langchain-ai/langchainjs/commit/41bfea51cf119573a3b956ee782d2731fe71c681)]:
+  - @langchain/core@1.1.19
+
 ## 1.3.13
 
 ### Patch Changes
