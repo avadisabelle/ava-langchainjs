@@ -81,3 +81,19 @@ export {
   formattedSpanToString,
   arcToAsciiChart,
 } from "./formatter.js";
+
+// Episode Bundler
+export {
+  KinshipMemoryRecord,
+  EpisodeBundle,
+  EpisodeBundlerOptions,
+  EpisodeBundler,
+} from "./episode_bundler.js";
+
+// Polyphonic Parser
+export {
+  VoiceSegment,
+  ParsedTranscript,
+  PolyphonicParserOptions,
+  PolyphonicParser,
+} from "./polyphonic_parser.js";

@@ -169,6 +169,19 @@ export {
 } from "./agent_harness.js";
 
 // =============================================================================
+// Execution Planner
+// =============================================================================
+
+export {
+  ExecutionStage,
+  Checkpoint,
+  FallbackStrategy,
+  ExecutionPlan,
+  ExecutionPlannerOptions,
+  ExecutionPlanner,
+} from "./execution_planner.js";
+
+// =============================================================================
 // Convenience: Full Pipeline
 // =============================================================================
 

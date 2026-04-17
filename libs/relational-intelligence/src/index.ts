@@ -154,6 +154,19 @@ export {
 } from "./liminal_buffer.js";
 
 // =============================================================================
+// Structural Tension Chain
+// =============================================================================
+
+export {
+  TensionVector,
+  TensionComponent,
+  StructuralTensionChainOptions,
+  StructuralTensionChain,
+  ProgressionMeasurement,
+  RoutingSignal,
+} from "./structural_tension_chain.js";
+
+// =============================================================================
 // Prompt Decomposition Re-exports (consumed by FireKeeper)
 // =============================================================================
 
