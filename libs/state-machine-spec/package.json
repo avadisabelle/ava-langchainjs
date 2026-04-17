@@ -1,6 +1,6 @@
 {
   "name": "ava-langchain-state-machine-spec",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "State Machine Specification layer for LangGraph - declarative workflow specs with formal validation, relational accountability, and Mermaid visualization",
   "type": "module",
   "engines": {
