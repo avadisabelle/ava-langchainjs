@@ -1,6 +1,6 @@
 {
   "name": "ava-langchain-inquiry-routing",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Inquiry Routing primitives for the Ava LangStack — transforms PDE decompositions into structured Inquiries routed to QMD (local semantic) and deep-search (academic) channels, grounded in Medicine Wheel epistemology and Wilson's relational ontology",
   "type": "module",
   "engines": {
