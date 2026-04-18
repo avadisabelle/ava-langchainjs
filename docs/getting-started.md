@@ -8,25 +8,25 @@ Our libraries are available as scoped npm packages. You can install individual p
 
 ```bash
 # Using npm
-npm install @avadisabelle/ava-langchain-prompt-decomposition
-npm install @avadisabelle/ava-langchain-inquiry-routing
-npm install @avadisabelle/ava-langchain-relational-intelligence
-npm install @avadisabelle/ava-langchain-narrative-tracing
-npm install @avadisabelle/ava-langchain-state-machine-spec
+npm install ava-langchain-prompt-decomposition
+npm install ava-langchain-inquiry-routing
+npm install ava-langchain-relational-intelligence
+npm install ava-langchain-narrative-tracing
+npm install ava-langchain-state-machine-spec
 
 # Using pnpm
-pnpm add @avadisabelle/ava-langchain-prompt-decomposition
-pnpm add @avadisabelle/ava-langchain-inquiry-routing
-pnpm add @avadisabelle/ava-langchain-relational-intelligence
-pnpm add @avadisabelle/ava-langchain-narrative-tracing
-pnpm add @avadisabelle/ava-langchain-state-machine-spec
+pnpm add ava-langchain-prompt-decomposition
+pnpm add ava-langchain-inquiry-routing
+pnpm add ava-langchain-relational-intelligence
+pnpm add ava-langchain-narrative-tracing
+pnpm add ava-langchain-state-machine-spec
 
 # Using yarn
-yarn add @avadisabelle/ava-langchain-prompt-decomposition
-yarn add @avadisabelle/ava-langchain-inquiry-routing
-yarn add @avadisabelle/ava-langchain-relational-intelligence
-yarn add @avadisabelle/ava-langchain-narrative-tracing
-yarn add @avadisabelle/ava-langchain-state-machine-spec
+yarn add ava-langchain-prompt-decomposition
+yarn add ava-langchain-inquiry-routing
+yarn add ava-langchain-relational-intelligence
+yarn add ava-langchain-narrative-tracing
+yarn add ava-langchain-state-machine-spec
 ```
 
 ## Quick Example
@@ -34,8 +34,8 @@ yarn add @avadisabelle/ava-langchain-state-machine-spec
 Here's a quick example demonstrating how to use some of the AvaLangStack components. For more detailed examples, please see the [examples/src/avalangstack/](/examples/src/avalangstack/) directory in our repository.
 
 ```typescript
-import { StructuralTensionChain } from "@avadisabelle/ava-langchain-relational-intelligence";
-import { decompose } from "@avadisabelle/ava-langchain-prompt-decomposition";
+import { StructuralTensionChain } from "ava-langchain-relational-intelligence";
+import { decompose } from "ava-langchain-prompt-decomposition";
 
 async function runExample() {
   // Evaluate structural tension

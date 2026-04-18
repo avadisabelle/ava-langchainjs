@@ -33,6 +33,19 @@ export default defineConfig({
           { text: 'Relational Intelligence', link: '/packages/relational-intelligence' },
           { text: 'State Machine Spec', link: '/packages/state-machine-spec' }
         ]
+      },
+      {
+        text: 'RISE Specifications',
+        items: [
+          { text: 'RISE Framework Overview', link: '/rispecs/README' },
+          { text: 'Inquiry Routing (01)', link: '/rispecs/01-inquiry-routing.spec' },
+          { text: 'Narrative Tracing', link: '/rispecs/narrative-tracing/narrative-tracing.spec' },
+          { text: 'Prompt Decomposition', link: '/rispecs/prompt-decomposition/prompt-decomposition.spec' },
+          { text: 'Relational Intelligence', link: '/rispecs/relational-intelligence/relational-intelligence.spec' },
+          { text: 'State Machine Spec', link: '/rispecs/state-machine-spec/state-machine-spec.spec' },
+          { text: 'LLMs Overview (Concise)', link: '/llms' },
+          { text: 'LLMs Overview (Full)', link: '/llms-full' }
+        ]
       }
     ],
 

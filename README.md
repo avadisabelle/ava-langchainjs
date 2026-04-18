@@ -26,8 +26,8 @@ This repository contains the core custom libraries for the **AvaLangStack Narrat
 ### Quick Example
 
 ```typescript
-import { StructuralTensionChain } from "@avadisabelle/ava-langchain-relational-intelligence";
-import { decompose } from "@avadisabelle/ava-langchain-prompt-decomposition";
+import { StructuralTensionChain } from "ava-langchain-relational-intelligence";
+import { decompose } from "ava-langchain-prompt-decomposition";
 
 // Evaluate structural tension
 const chain = new StructuralTensionChain();
@@ -49,22 +49,22 @@ See [examples/src/avalangstack/](examples/src/avalangstack/) for complete demons
 
 ## ⚡️ Quick Install
 
-To install any of the AvaLangStack packages, use your preferred package manager with the `@avadisabelle/` scope:
+To install any of the AvaLangStack packages, use your preferred package manager by their package name:
 
 ```bash
 # Using npm
-npm install @avadisabelle/ava-langchain-prompt-decomposition
-npm install @avadisabelle/ava-langchain-inquiry-routing
+npm install ava-langchain-prompt-decomposition
+npm install ava-langchain-inquiry-routing
 # ... and so on for other packages
 
 # Using pnpm
-pnpm add @avadisabelle/ava-langchain-prompt-decomposition
-pnpm add @avadisabelle/ava-langchain-inquiry-routing
+pnpm add ava-langchain-prompt-decomposition
+pnpm add ava-langchain-inquiry-routing
 # ... and so on for other packages
 
 # Using yarn
-yarn add @avadisabelle/ava-langchain-prompt-decomposition
-yarn add @avadisabelle/ava-langchain-inquiry-routing
+yarn add ava-langchain-prompt-decomposition
+yarn add ava-langchain-inquiry-routing
 # ... and so on for other packages
 ```
 
