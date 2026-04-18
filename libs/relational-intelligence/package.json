@@ -52,14 +52,10 @@
     "zod": "^3.23.0"
   },
   "peerDependencies": {
-    "ava-langchain-narrative-tracing": ">=0.1.0",
-    "@langchain/core": ">=0.2.0"
+    "ava-langchain-narrative-tracing": ">=0.1.0"
   },
   "peerDependenciesMeta": {
     "ava-langchain-narrative-tracing": {
-      "optional": true
-    },
-    "@langchain/core": {
       "optional": true
     }
   },
@@ -69,7 +65,6 @@
     "eslint": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0",
-    "@langchain/core": "^0.3.0"
+    "vitest": "^1.0.0"
   }
 }

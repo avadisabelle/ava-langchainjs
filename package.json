@@ -13,6 +13,8 @@
     "build": "turbo build:compile",
     "watch": "turbo watch build:compile",
     "clean": "turbo clean",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
     "dev": "pnpm --filter @langchain/build watch",
     "format": "turbo format --concurrency=50",
     "format:check": "turbo format:check --concurrency=50",
@@ -50,7 +52,8 @@
     "tsdown": "^0.20.3",
     "tsx": "^4.21.0",
     "turbo": "^2.8.9",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitepress": "^1.6.4"
   },
   "pnpm": {
     "overrides": {
