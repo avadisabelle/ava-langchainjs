@@ -1,22 +1,12 @@
-# 🦜️🔗 LangChain.js
+# 🌿 AvaLangStack — Narrative Intelligence Ecosystem
 
 ![npm](https://img.shields.io/npm/dm/langchain) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/langchain.svg?style=social&label=Follow%20%40LangChain)](https://x.com/langchain)
 
-LangChain is a framework for building LLM-powered applications. It helps you chain together interoperable components and third-party integrations to simplify AI application development — all while future-proofing decisions as the underlying technology evolves.
+The AvaLangStack is a collection of custom libraries designed to infuse **Narrative Intelligence** and **Indigenous relational paradigms** into LLM-powered applications. It builds upon the robust foundation of LangChain.js to create systems that prioritize relational accountability, ceremonial context, and a deeper understanding of intent and causality.
 
-**Documentation**: To learn more about LangChain, check out [the docs](https://docs.langchain.com/oss/javascript/langchain/overview).
+## 📦 AvaLangStack — Custom Libraries
 
-If you're looking for more advanced customization or agent orchestration, check out [LangGraph.js](https://docs.langchain.com/oss/javascript/langgraph/overview). our framework for building agents and controllable workflows.
-
-> [!NOTE]
-> Looking for the Python version? Check out [LangChain](https://github.com/langchain-ai/langchain).
-
-To help you ship LangChain apps to production faster, check out [LangSmith](https://smith.langchain.com).
-[LangSmith](https://smith.langchain.com) is a unified developer platform for building, testing, and monitoring LLM applications.
-
-## 🌿 AvaLangStack — Custom Libraries
-
-This fork includes custom libraries for the **AvaLangStack Narrative Intelligence ecosystem**:
+This repository contains the core custom libraries for the **AvaLangStack Narrative Intelligence ecosystem**:
 
 | Package | Description |
 |---------|-------------|
@@ -36,8 +26,8 @@ This fork includes custom libraries for the **AvaLangStack Narrative Intelligenc
 ### Quick Example
 
 ```typescript
-import { StructuralTensionChain } from "ava-langchain-relational-intelligence";
-import { decompose } from "ava-langchain-prompt-decomposition";
+import { StructuralTensionChain } from "@avadisabelle/ava-langchain-relational-intelligence";
+import { decompose } from "@avadisabelle/ava-langchain-prompt-decomposition";
 
 // Evaluate structural tension
 const chain = new StructuralTensionChain();
@@ -59,51 +49,45 @@ See [examples/src/avalangstack/](examples/src/avalangstack/) for complete demons
 
 ## ⚡️ Quick Install
 
-You can use npm, pnpm, or yarn to install LangChain.js
+To install any of the AvaLangStack packages, use your preferred package manager with the `@avadisabelle/` scope:
 
-`npm install -S langchain` or `pnpm install langchain` or `yarn add langchain`
+```bash
+# Using npm
+npm install @avadisabelle/ava-langchain-prompt-decomposition
+npm install @avadisabelle/ava-langchain-inquiry-routing
+# ... and so on for other packages
 
-## 🚀 Why use LangChain?
+# Using pnpm
+pnpm add @avadisabelle/ava-langchain-prompt-decomposition
+pnpm add @avadisabelle/ava-langchain-inquiry-routing
+# ... and so on for other packages
 
-LangChain helps developers build applications powered by LLMs through a standard interface for agents, models, embeddings, vector stores, and more.
+# Using yarn
+yarn add @avadisabelle/ava-langchain-prompt-decomposition
+yarn add @avadisabelle/ava-langchain-inquiry-routing
+# ... and so on for other packages
+```
 
-Use LangChain for:
+## LangChain.js Foundation
 
-- **Real-time data augmentation**. Easily connect LLMs to diverse data sources and external/internal systems, drawing from LangChain’s vast library of integrations with model providers, tools, vector stores, retrievers, and more.
-- **Model interoperability**. Swap models in and out as your engineering team experiments to find the best choice for your application’s needs. As the industry frontier evolves, adapt quickly — LangChain’s abstractions keep you moving without losing momentum.
-- **Rapid prototyping**. Quickly build and iterate on LLM applications with LangChain's modular, component-based architecture. Test different approaches and workflows without rebuilding from scratch, accelerating your development cycle.
-- **Production-ready features**. Deploy reliable applications with built-in support for monitoring, evaluation, and debugging through integrations like LangSmith. Scale with confidence using battle-tested patterns and best practices.
-- **Vibrant community and ecosystem**. Leverage a rich ecosystem of integrations, templates, and community-contributed components. Benefit from continuous improvements and stay up-to-date with the latest AI developments through an active open-source community.
-- **Flexible abstraction layers**. Work at the level of abstraction that suits your needs - from high-level chains for quick starts to low-level components for fine-grained control. LangChain grows with your application's complexity.
+The AvaLangStack is built upon the powerful LangChain.js framework. LangChain provides the foundational components for building LLM-powered applications, offering a standard interface for agents, models, embeddings, vector stores, and more.
 
-## 📦 LangChain's ecosystem
+For more information on the underlying LangChain.js framework, its core concepts, and its ecosystem, please refer to the following resources:
 
-- [LangSmith](https://www.langchain.com/langsmith) - Unified developer platform for building, testing, and monitoring LLM applications. With LangSmith, you can debug poor-performing LLM app runs, evaluate agent trajectories, gain visibility in production, and deploy agents with confidence.
-- [LangGraph](https://docs.langchain.com/oss/javascript/langgraph/overview) - Build agents that can reliably handle complex tasks with LangGraph, our low-level agent orchestration framework. LangGraph offers customizable architecture, long-term memory, and human-in-the-loop workflows — and is trusted in production by companies like LinkedIn, Uber, Klarna, and GitLab.
+*   **Documentation**: [LangChain.js Docs](https://docs.langchain.com/oss/javascript/langchain/overview)
+*   **Why use LangChain?**: LangChain helps developers build applications powered by LLMs through a standard interface for agents, models, embeddings, vector stores, and more. It enables real-time data augmentation, model interoperability, rapid prototyping, and production-ready features within a vibrant community and flexible abstraction layers.
+*   **LangChain's ecosystem**: Explore [LangSmith](https://www.langchain.com/langsmith) for testing and monitoring, and [LangGraph](https://docs.langchain.com/oss/javascript/langgraph/overview) for agent orchestration.
+*   **Supported Environments**: LangChain.js is written in TypeScript and supports Node.js, Cloudflare Workers, Vercel/Next.js, Supabase Edge Functions, Browser, Deno, and Bun environments.
+*   **Additional Resources**:
+    *   [Getting started](https://docs.langchain.com/oss/javascript/langchain/overview)
+    *   [Learn](https://docs.langchain.com/oss/javascript/learn)
+    *   [LangChain Forum](https://forum.langchain.com)
+    *   [Chat LangChain](https://chat.langchain.com)
 
-## 🌐 Supported Environments
+## 💁 Contributing to AvaLangStack
 
-LangChain.js is written in TypeScript and can be used in:
+We welcome contributions to the AvaLangStack! Whether it's a new feature, an improved design principle, or better documentation that clarifies the narrative intelligence concepts, your contributions are valued.
 
-- Node.js (ESM and CommonJS) - 20.x, 22.x, 24.x
-- Cloudflare Workers
-- Vercel / Next.js (Browser, Serverless and Edge functions)
-- Supabase Edge Functions
-- Browser
-- Deno
-- Bun
+For detailed information on how to contribute, please see our specific [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-## 📖 Additional Resources
-
-- [Getting started](https://docs.langchain.com/oss/javascript/langchain/overview): Installation, setting up the environment, simple examples
-- [Learn](https://docs.langchain.com/oss/javascript/learn): Learn about the core concepts of LangChain.
-- [LangChain Forum](https://forum.langchain.com): Connect with the community and share all of your technical questions, ideas, and feedback.
-- [Chat LangChain](https://chat.langchain.com): Ask questions & chat with our documentation.
-
-## 💁 Contributing
-
-As an open-source project in a rapidly developing field, we are extremely open to contributions, whether it be in the form of a new feature, improved infrastructure, or better documentation.
-
-For detailed information on how to contribute, see [`CONTRIBUTING.md`](https://github.com/langchain-ai/langchainjs/blob/main/CONTRIBUTING.md).
-
-Please report any security issues or concerns following our [security guidelines](https://github.com/langchain-ai/.github/blob/main/SECURITY.md).
+Please report any security issues or concerns following our [security guidelines](https://github.com/avadisabelle/ava-langchainjs/blob/main/.github/SECURITY.md).

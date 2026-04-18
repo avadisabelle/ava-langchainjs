@@ -1,5 +1,8 @@
 packages:
-  - "libs/*"
-  - "libs/providers/*"
+  - "libs/inquiry-routing"
+  - "libs/narrative-tracing"
+  - "libs/prompt-decomposition"
+  - "libs/relational-intelligence"
+  - "libs/state-machine-spec"
   - "examples"
   - "internal/*"

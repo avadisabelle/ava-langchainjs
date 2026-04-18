@@ -21,7 +21,7 @@ Then from the `examples/` directory, run:
 
 eg.
 
-`pnpm run start ./src/prompts/few_shot.ts`
+`pnpm run start ./src/accountability-routing/accountability_as_routing.ts`
 
 ## Run an example with the transpiled JS
 

@@ -1,12 +1,12 @@
 {
-  "name": "langchainjs",
-  "author": "LangChain",
+  "name": "@avadisabelle/avalangstack",
+  "author": "Ava Isabelle",
   "license": "MIT",
   "private": true,
-  "homepage": "https://github.com/avadisabelle/ava-langchainjs/tree/main/",
+  "homepage": "https://github.com/avadisabelle/avalangstack/tree/main/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/avadisabelle/ava-langchainjs.git"
+    "url": "https://github.com/avadisabelle/avalangstack.git"
   },
   "packageManager": "pnpm@10.14.0",
   "scripts": {

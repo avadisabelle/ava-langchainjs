@@ -1,0 +1,5 @@
+ava-langchain-inquiry-routing: Transforms PDE DecompositionResults into structured, relationally-grounded Inquiry objects, routed by Medicine Wheel direction to knowledge channels.
+ava-langchain-narrative-tracing: Enables narrative-aware observability across the Narrative Intelligence Stack, providing semantic event tracing, cross-system correlation, human-readable formatting, adapter bridges, and narrative quality metrics.
+ava-langchain-prompt-decomposition: Enables structured understanding from unstructured prompts through Four Directions analysis, intent extraction, dependency-ordered action stacks, relational balance assessment, and LangChain composability.
+ava-langchain-relational-intelligence: Enables relationally accountable AI systems grounded in Indigenous epistemology through Medicine Wheel ontological filtering, relational importance with accountability decay, epistemic spiral tracking, value gating, and Fire Keeper coordination.
+ava-langchain-state-machine-spec: Enables declarative workflow specifications with a type system for states and transitions, formal graph validation, visualization, relational accountability mapping, and serialization.

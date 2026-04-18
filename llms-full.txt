@@ -1,0 +1,60 @@
+Package: ava-langchain-inquiry-routing
+Desired Outcome:
+A set of chain-level primitives that transform PDE `DecompositionResult` into structured `Inquiry` objects — each classified by Medicine Wheel direction, routed to a knowledge channel (QMD local, deep-search academic, workspace-scan), and enriched with Wilson's relational ontology markers and Two-Eyed Seeing (Etuaptmumk) epistemological fields. The pipeline runs synchronously: **Generate → Enrich → Route → Format**.
+Downstream consumers (LangGraph engine, mia-code, ava-Flowise) receive dispatch-ready queries without needing to understand routing internals.
+
+Structural Tension:
+PDE produces *structure*; downstream channels need *questions*. The tension between decomposition-as-analysis and inquiry-as-action resolves through four chain primitives that transform one into the other while preserving relational accountability at every step.
+---
+Package: ava-langchain-narrative-tracing
+Desired Outcome:
+The **ava-langchain-narrative-tracing** package enables developers to create **narrative-aware observability** across the Narrative Intelligence Stack through:
+1. **Semantic Narrative Event Tracing** — Every operation is traced not as a generic span but as a narrative event (beat creation, three-universe analysis, routing decision, story generation lifecycle) with semantic glyphs (📝, 🔍, ✨, 📖) that make traces human-readable
+2. **Cross-System Trace Correlation** — A single story generation spans LangGraph, Flowise, Langflow, and the Storytelling system. The orchestrator correlates traces across boundaries using `X-Narrative-Trace-Id`, `X-Session-Id`, and `X-Story-Id` headers
+3. **Human-Readable Trace Formatting** — Completed traces render as narrative-aware displays with ASCII story arc visualization, character arc progression, and formatted span trees that tell the story of how a story was made
+4. **Adapter Bridges for Stack Integration** — Purpose-built adapters for prompt-decomposition, relational-intelligence, LangGraph, Miadi integration, and storytelling hooks that emit typed tracing events without coupling the traced components to Langfuse
+5. **Narrative Quality Metrics** — Accumulated metrics across a story generation session (beat count, coherence scores, gap counts, routing decisions) that quantify the narrative health of the output
+
+Structural Tension:
+The current reality provides the core tracing infrastructure, event types, and adapter bridges. The creative tension lives in advancing toward **episode bundling** — where session artifacts are gathered into structured `EpisodeBundle` objects with kinship metadata that connect sessions into a larger narrative — and toward **polyphonic parsing** that transforms talking-circle markdown into individually attributed voice segments for richer multi-perspective tracing.
+---
+Package: ava-langchain-prompt-decomposition
+Desired Outcome:
+The **ava-langchain-prompt-decomposition** package enables developers to create **structured understanding from unstructured prompts** through:
+1. **Four Directions Analysis** — Every prompt is decomposed through the Medicine Wheel:
+   - EAST (Waabinong/Vision): What is being asked? Requirements clarity
+   - SOUTH (Zhaawanong/Analysis): What needs to be learned? Dependencies and research
+   - WEST (Epangishmok/Validation): What needs reflection? Testing and verification
+   - NORTH (Kiiwedinong/Action): What executes? Implementation steps
+2. **Intent Extraction** — Primary and secondary intents with urgency, confidence scores, and dependency inference
+3. **Dependency-Ordered Action Stacks** — Topologically sorted execution plans that respect task dependencies
+4. **Relational Balance Assessment** — Medicine Wheel bridge that measures directional balance and flags ceremony requirements
+5. **LangChain Composability** — `RunnableDecomposer`, `RunnableDirectionalAnalyzer`, and `RunnableWheelGate` integrate with LCEL chains
+
+Structural Tension:
+The pipeline flows as a natural spiral: **Prompt → Directional Analysis → Intent Extraction → Dependency Mapping → Action Stack → Wheel Enrichment → Output**.
+Each stage enriches the previous, creating structural tension between the raw prompt (current reality) and the fully decomposed action plan (desired outcome).
+---
+Package: ava-langchain-relational-intelligence
+Desired Outcome:
+The **ava-langchain-relational-intelligence** package enables developers to create **relationally accountable AI systems** grounded in Indigenous epistemology through:
+1. **Medicine Wheel Ontological Filtering** — Every input is assessed through four quadrants (Physical, Emotional, Mental, Spiritual), ensuring agents engage the full spectrum of relational reality rather than operating from a single analytical dimension
+2. **Relational Importance with Accountability Decay** — Importance Units carry Relational Strings (Land/Dream/Code/Vision) that connect insights back to their sources, with accountability scores that decay when relationships are not reaffirmed through epistemic iteration
+3. **Epistemic Spiral Tracking** — Returning to a topic is recognized as ceremony, not redundancy. The SpiralTracker measures the depth of the spiral and analyzes shifts between circles (deepening, expanding, converging, returning)
+4. **Value Gating with Research Is Ceremony** — Hard constraints prevent autonomous action on Indigenous knowledge domains without proper ceremonial context, and soft constraints flag relational imbalances before they propagate
+5. **Fire Keeper Coordination** — A coordinating agent protocol that holds the Medicine Wheel, reviews sub-agent reports against the project vision, triggers human engagement when relational accountability requires it, and prunes by Relational Milestones instead of time intervals
+
+Structural Tension:
+The current reality provides the complete component set for relational intelligence. The creative tension lives in advancing toward deeper integration where the `StructuralTensionChain` connects current reality to desired outcome through tension vectors that route signal across the entire AvaLangStack, and where LLM-enhanced classification elevates beyond keyword heuristics while maintaining the relational accountability that keyword scoring ensures.
+---
+Package: ava-langchain-state-machine-spec
+Desired Outcome:
+The **ava-langchain-state-machine-spec** package enables developers to create **declarative workflow specifications** that serve as the single source of truth for graph-based systems through:
+1. **Declarative State Machine Type System** — States are first-class conditions (places the system IS), not actions (things the system DOES). Transitions carry preconditions, actions, and postconditions. The spec is independent of any runtime framework — LangGraph or any executor consumes it.
+2. **Formal Graph Validation** — `validateSpec()` checks structural integrity, `computeReachability()` maps which states can reach which, `findDeadlockedStates()` identifies states with no exit path, and `canAllStatesTerminate()` verifies every state has a path to a terminal state.
+3. **Mermaid and Text Visualization** — `generateMermaid()` and `generateMermaidFlowchart()` produce renderable Mermaid diagrams, `generateTextSummary()` creates human-readable workflow descriptions, and `generateAdjacencyMatrix()` outputs the state-transition matrix.
+4. **Relational Accountability Mapping** — Every state carries responsibility. `AccountabilityMap` tracks who is responsible at each state, who executes transitions, and who verifies postconditions. `findAccountabilityGaps()` reveals where responsibility is unclear, and `generateAccountabilityNarrative()` produces human-readable accountability stories.
+5. **Specification Serialization and Parsing** — `parseSpec()` and `serializeSpec()` enable JSON round-tripping with `serializeSpecSnakeCase()` for Python interop, creating a shared workflow contract across TypeScript and Python systems.
+
+Structural Tension:
+The current reality provides complete spec authoring, validation, visualization, and accountability mapping. The creative tension lives in advancing toward runtime integration where `StateMachineSpec` documents are consumed by LangGraph executors that respect the formal validation and accountability constraints at execution time, and toward cross-spec composition where multiple `StateMachineSpec` documents compose into larger workflow hierarchies with accountability flowing across spec boundaries.
