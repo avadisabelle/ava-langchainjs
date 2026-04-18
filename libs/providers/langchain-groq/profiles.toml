@@ -1,2 +1,0 @@
-provider = "groq"
-output = "src/profiles.ts"

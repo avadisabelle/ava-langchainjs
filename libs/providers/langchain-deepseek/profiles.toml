@@ -1,2 +1,0 @@
-provider = "deepseek"
-output = "src/profiles.ts"

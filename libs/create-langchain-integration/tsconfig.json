@@ -1,9 +1,0 @@
-{
-  "extends": "@langchain/tsconfig/base.json",
-  "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "dist"
-  },
-  "include": ["*.ts", "helpers/**/*.ts"],
-  "exclude": ["dist", "node_modules", "template"]
-}
