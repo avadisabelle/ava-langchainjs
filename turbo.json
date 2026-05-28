@@ -7,7 +7,7 @@
     "build:compile": {
       "dependsOn": ["^build:compile"],
       "env": ["BUILD_MODE"],
-      "inputs": ["src/**", "tsconfig.json", "tsdown.config.ts", "package.json"],
+      "inputs": ["src/**", "tsconfig.json", "tsup.config.ts", "package.json"],
       "outputs": ["dist/**"]
     },
     "build:examples": {

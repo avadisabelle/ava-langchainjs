@@ -21,6 +21,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:compile": "tsup",
     "dev": "tsup --watch",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -54,11 +55,15 @@
   },
   "peerDependencies": {
     "@langchain/core": ">=0.1.0",
-    "ava-langchain-narrative-tracing": ">=0.1.0"
+    "ava-langchain-narrative-tracing": ">=0.1.0",
+    "ava-langchain-prompt-decomposition": ">=0.1.0"
   },
   "peerDependenciesMeta": {
     "ava-langchain-narrative-tracing": {
       "optional": true
+    },
+    "ava-langchain-prompt-decomposition": {
+      "optional": false
     }
   },
   "devDependencies": {

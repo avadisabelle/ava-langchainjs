@@ -170,6 +170,10 @@ export {
 // Prompt Decomposition Re-exports (consumed by FireKeeper)
 // =============================================================================
 
+// Import via published package, not relative path, to prevent tsup from
+// bundling prompt-decomposition source into this package's dist (which would
+// break instanceof checks and cause duplicate class registration).
+// Fixes: avadisabelle/ava-langchainjs#10
 export {
   Direction,
   DirectionalAnalysis,
@@ -180,4 +184,4 @@ export {
   SecondaryIntent,
   PrimaryIntent,
   Urgency,
-} from "../../prompt-decomposition/src/index.js";
+} from "ava-langchain-prompt-decomposition";
