@@ -7,7 +7,7 @@ import {
   DependencyGraph,
   ActionItem,
   WheelEnrichedAnalysis,
-} from "../../../prompt-decomposition/src/index.js"; // Adjust path as necessary
+} from "ava-langchain-prompt-decomposition";
 
 export interface PromptDecompositionBridgeOptions {
   autoFlush?: boolean;

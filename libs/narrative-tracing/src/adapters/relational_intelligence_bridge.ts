@@ -9,7 +9,7 @@ import {
   HumanEngagementRequest,
   RelationalMilestone,
   LiminalInput,
-} from "../../../relational-intelligence/src/index.js"; // Adjust path as necessary
+} from "ava-langchain-relational-intelligence";
 
 export interface RelationalIntelligenceBridgeOptions {
   autoFlush?: boolean;
