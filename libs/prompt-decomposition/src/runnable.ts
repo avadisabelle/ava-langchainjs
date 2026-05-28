@@ -164,3 +164,40 @@ export class RunnableWheelGate extends RunnableLambda<string, WheelEnrichedAnaly
     });
   }
 }
+
+// =============================================================================
+// ChainDecomposer (Consistent Engine Interface)
+// =============================================================================
+
+/**
+ * Standard Engine wrapper for the LangChain-based decomposition.
+ * Provides a consistent interface for consumers like Ava-Decomposer-Studio.
+ */
+export class ChainDecomposer {
+  private options?: RunnableDecomposerOptions;
+
+  constructor(options?: RunnableDecomposerOptions & { apiKey?: string }) {
+    this.options = options;
+  }
+
+  /**
+   * Run the full decomposition pipeline.
+   * Returns a simplified result compatible with the studio's expectations.
+   */
+  async decompose(prompt: string): Promise<DecompositionResult> {
+    const decomposer = new DirectionalDecomposer(this.options?.decomposer);
+    const extractor = new IntentExtractor({
+      ...this.options?.extractor,
+      ...(this.options?.llm ? { llm: this.options.llm } : {}),
+    });
+    const mapper = new DependencyMapper();
+    const builder = new ActionStackBuilder(this.options?.actionStack);
+
+    const directionalAnalysis = decomposer.decompose(prompt);
+    const intentResult = await extractor.extract(prompt);
+    const graph = mapper.buildGraph(intentResult.secondary);
+    const order = mapper.computeExecutionOrder(graph);
+    
+    return builder.build(directionalAnalysis, intentResult, order);
+  }
+}

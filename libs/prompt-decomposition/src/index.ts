@@ -139,11 +139,45 @@ export {
 
 export {
   StoredDecomposition,
+  PdeStorageLayout,
+  SaveDecompositionOptions,
+  DecompositionMarkdownOptions,
   saveDecomposition,
+  saveDecompositionTree,
   loadDecomposition,
   listDecompositions,
   decompositionToMarkdown,
 } from "./storage.js";
+
+export {
+  PDE_DIR,
+  PDE_META_FILENAME,
+  PDE_METADATA_SCHEMA_VERSION,
+  CHILD_KINDS,
+  ChildKind,
+  PdeSessionIdSource,
+  PdeRuntimeEngine,
+  ChildEntry,
+  EngineFallbackAttempt,
+  PdeFallbackMetadata,
+  PdeTreeMetadata,
+  PdeResolvedContext,
+  normalizeAddDirs,
+  mergeAddDirs,
+  ensureDirectory,
+  getPdeRoot,
+  extractPdeUuidFromFolderName,
+  extractPdeUuidFromPath,
+  resolvePdeFolderPath,
+  findPdeFolder,
+  readPdeTreeMetadata,
+  writePdeTreeMetadata,
+  resolvePdeContext,
+  resolvePdeContextByPath,
+  buildPdeTreeMetadata,
+  appendChildEntry,
+  updatePdeTreeMetadata,
+} from "./pde_metadata.js";
 
 // =============================================================================
 // LangChain Runnable Wrappers (Chain Composability)
@@ -153,6 +187,7 @@ export {
   RunnableDecomposer,
   RunnableDirectionalAnalyzer,
   RunnableWheelGate,
+  ChainDecomposer,
   RunnableDecomposerOptions,
   RunnableDecomposerResult,
 } from "./runnable.js";

@@ -1,10 +1,10 @@
 {
   "name": "ava-langchain-prompt-decomposition",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "Prompt Decomposition Engine primitives for the Narrative Intelligence Stack - Four Directions analysis, intent extraction, dependency mapping, and action stacking grounded in Medicine Wheel epistemology",
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -48,6 +48,7 @@
   "author": "ava",
   "license": "MIT",
   "dependencies": {
+    "@langchain/core": "^1.1.16",
     "uuid": "^9.0.0",
     "zod": "^3.23.0"
   },
