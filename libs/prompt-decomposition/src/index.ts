@@ -217,6 +217,34 @@ export {
 } from "./execution_planner.js";
 
 // =============================================================================
+// Strategy Pattern (pluggable decomposition strategies)
+// =============================================================================
+
+export {
+  ComplexityAnalyzer,
+  KeywordStrategy,
+  SemanticStrategy,
+  HybridStrategy,
+  StrategySelector,
+  MultiPassDecomposer,
+  ConfidenceCalibrator,
+  StrategicDecomposer,
+} from "./strategy_spec.js";
+
+export type {
+  StrategyId,
+  PromptComplexity,
+  ComplexitySignals,
+  AvailableResources,
+  StrategyPreferences,
+  StrategyResult,
+  DecompositionStrategy,
+  Disagreement,
+  MultiPassResult,
+  StrategicDecompositionResult,
+} from "./strategy_spec.js";
+
+// =============================================================================
 // Convenience: Full Pipeline
 // =============================================================================
 

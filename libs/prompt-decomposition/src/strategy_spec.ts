@@ -753,24 +753,18 @@ export class HybridStrategy implements DecompositionStrategy {
       primary,
       secondary: merged,
       context: {
-        filesNeeded: [
-          ...new Set([
+        filesNeeded: Array.from(new Set([
             ...keyword.context.filesNeeded,
             ...semantic.context.filesNeeded,
-          ]),
-        ],
-        toolsRequired: [
-          ...new Set([
+        ])),
+        toolsRequired: Array.from(new Set([
             ...keyword.context.toolsRequired,
             ...semantic.context.toolsRequired,
-          ]),
-        ],
-        assumptions: [
-          ...new Set([
+        ])),
+        assumptions: Array.from(new Set([
             ...keyword.context.assumptions,
             ...semantic.context.assumptions,
-          ]),
-        ],
+        ])),
       },
     };
   }
@@ -783,10 +777,10 @@ export class HybridStrategy implements DecompositionStrategy {
     const wordsB = new Set(b.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
     if (wordsA.size === 0 && wordsB.size === 0) return 1;
     let intersection = 0;
-    for (const w of wordsA) {
+    for (const w of Array.from(wordsA)) {
       if (wordsB.has(w)) intersection++;
     }
-    const union = new Set([...wordsA, ...wordsB]).size;
+    const union = new Set([...Array.from(wordsA), ...Array.from(wordsB)]).size;
     return union === 0 ? 0 : intersection / union;
   }
 
@@ -1059,7 +1053,7 @@ export class StrategySelector {
     const excluded = new Set(preferences?.excludeStrategies ?? []);
     const feasible: Array<{ strategy: DecompositionStrategy; score: number }> = [];
 
-    for (const [id, strategy] of this.registry) {
+    for (const [id, strategy] of Array.from(this.registry)) {
       if (excluded.has(id)) continue;
       if (!strategy.canHandle(resources)) continue;
 
@@ -1415,7 +1409,7 @@ export class MultiPassDecomposer {
         ...preferences,
         excludeStrategies: [
           ...(preferences?.excludeStrategies ?? []),
-          ...usedStrategies,
+          ...Array.from(usedStrategies),
         ],
       });
 
@@ -1470,7 +1464,7 @@ export class MultiPassDecomposer {
     if (uniqueLeadDirs.size > 1) {
       disagreements.push({
         aspect: "lead_direction",
-        description: `Strategies disagree on lead direction: ${[...uniqueLeadDirs].join(" vs ")}`,
+        description: `Strategies disagree on lead direction: ${Array.from(uniqueLeadDirs).join(" vs ")}`,
         strategyValues: Object.fromEntries(
           results.map((r) => [r.strategyId, r.directionalAnalysis.leadDirection])
         ),
@@ -1484,7 +1478,7 @@ export class MultiPassDecomposer {
     if (uniqueActions.size > 1) {
       disagreements.push({
         aspect: "primary_action",
-        description: `Strategies disagree on primary action: ${[...uniqueActions].join(" vs ")}`,
+        description: `Strategies disagree on primary action: ${Array.from(uniqueActions).join(" vs ")}`,
         strategyValues: Object.fromEntries(
           results.map((r) => [r.strategyId, r.intents.primary.action])
         ),
