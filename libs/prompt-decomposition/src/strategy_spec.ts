@@ -23,18 +23,47 @@
 import type { BaseLanguageModel } from "@langchain/core/language_models/base";
 import type { Embeddings } from "@langchain/core/embeddings";
 
-import type {
-  DirectionalAnalysis,
-  DirectionalInsight,
-  Direction,
+import {
+  DirectionalDecomposer,
+  DIRECTION_KEYWORDS,
+  type DirectionalAnalysis,
+  type DirectionalInsight,
+  type Direction,
 } from "./directional_decomposer.js";
-import type {
-  IntentExtractionResult,
-  PrimaryIntent,
-  SecondaryIntent,
+import {
+  IntentExtractor,
+  type IntentExtractionResult,
+  type PrimaryIntent,
+  type SecondaryIntent,
 } from "./intent_extractor.js";
-import type { DecompositionResult } from "./action_stack.js";
-import type { WheelEnrichedAnalysis } from "./wheel_bridge.js";
+import { DependencyMapper } from "./dependency_mapper.js";
+import { ActionStackBuilder, type DecompositionResult } from "./action_stack.js";
+import { MedicineWheelBridge, type WheelEnrichedAnalysis } from "./wheel_bridge.js";
+
+// =============================================================================
+// Shared Utilities
+// =============================================================================
+
+/**
+ * Compute per-direction confidence from the average insight confidence
+ * within each direction bucket. Shared by KeywordStrategy and SemanticStrategy.
+ */
+function computeDirectionConfidenceFromAnalysis(
+  analysis: DirectionalAnalysis
+): Record<Direction, number> {
+  const result: Record<string, number> = {};
+  for (const dir of ["east", "south", "west", "north"] as Direction[]) {
+    const insights = analysis.directions[dir];
+    if (insights.length === 0) {
+      result[dir] = 0;
+    } else {
+      const avg =
+        insights.reduce((sum, i) => sum + i.confidence, 0) / insights.length;
+      result[dir] = avg;
+    }
+  }
+  return result as Record<Direction, number>;
+}
 
 // =============================================================================
 // Core Types
@@ -236,13 +265,6 @@ export class KeywordStrategy implements DecompositionStrategy {
   async decompose(prompt: string, _resources: AvailableResources): Promise<StrategyResult> {
     const startTime = Date.now();
 
-    // --- Import existing components (dynamic to avoid circular deps at module level) ---
-    const { DirectionalDecomposer } = await import("./directional_decomposer.js");
-    const { IntentExtractor } = await import("./intent_extractor.js");
-    const { DependencyMapper } = await import("./dependency_mapper.js");
-    const { ActionStackBuilder } = await import("./action_stack.js");
-    const { MedicineWheelBridge } = await import("./wheel_bridge.js");
-
     const decomposer = new DirectionalDecomposer();
     const extractor = new IntentExtractor(); // No LLM — pure heuristics
     const mapper = new DependencyMapper();
@@ -257,7 +279,7 @@ export class KeywordStrategy implements DecompositionStrategy {
     const wheelEnriched = bridge.enrich(directionalAnalysis);
 
     // Compute per-direction confidence from keyword density
-    const directionConfidence = this.computeDirectionConfidence(directionalAnalysis);
+    const directionConfidence = computeDirectionConfidenceFromAnalysis(directionalAnalysis);
     const confidence = this.computeOverallConfidence(directionalAnalysis, intents);
 
     const diagnostics: string[] = [];
@@ -279,26 +301,6 @@ export class KeywordStrategy implements DecompositionStrategy {
       executionTimeMs: Date.now() - startTime,
       diagnostics,
     };
-  }
-
-  /**
-   * Per-direction confidence based on the average insight confidence
-   * within each direction bucket.
-   */
-  private computeDirectionConfidence(
-    analysis: DirectionalAnalysis
-  ): Record<Direction, number> {
-    const result: Record<string, number> = {};
-    for (const dir of ["east", "south", "west", "north"] as Direction[]) {
-      const insights = analysis.directions[dir];
-      if (insights.length === 0) {
-        result[dir] = 0;
-      } else {
-        const avg = insights.reduce((sum, i) => sum + i.confidence, 0) / insights.length;
-        result[dir] = avg;
-      }
-    }
-    return result as Record<Direction, number>;
   }
 
   /**
@@ -407,12 +409,6 @@ export class SemanticStrategy implements DecompositionStrategy {
       throw new Error("SemanticStrategy requires an LLM but none was provided.");
     }
 
-    const { DirectionalDecomposer } = await import("./directional_decomposer.js");
-    const { IntentExtractor } = await import("./intent_extractor.js");
-    const { DependencyMapper } = await import("./dependency_mapper.js");
-    const { ActionStackBuilder } = await import("./action_stack.js");
-    const { MedicineWheelBridge } = await import("./wheel_bridge.js");
-
     const diagnostics: string[] = [];
 
     // Use LLM-enhanced intent extraction
@@ -450,7 +446,7 @@ export class SemanticStrategy implements DecompositionStrategy {
     const decomposition = builder.build(directionalAnalysis, intents, order);
     const wheelEnriched = bridge.enrich(directionalAnalysis);
 
-    const directionConfidence = this.computeDirectionConfidence(directionalAnalysis);
+    const directionConfidence = computeDirectionConfidenceFromAnalysis(directionalAnalysis);
     // Semantic strategy gets a confidence boost for using LLM
     const baseConfidence = this.computeBaseConfidence(directionalAnalysis, intents);
     const confidence = Math.min(1, baseConfidence + 0.1);
@@ -466,22 +462,6 @@ export class SemanticStrategy implements DecompositionStrategy {
       executionTimeMs: Date.now() - startTime,
       diagnostics,
     };
-  }
-
-  private computeDirectionConfidence(
-    analysis: DirectionalAnalysis
-  ): Record<Direction, number> {
-    const result: Record<string, number> = {};
-    for (const dir of ["east", "south", "west", "north"] as Direction[]) {
-      const insights = analysis.directions[dir];
-      if (insights.length === 0) {
-        result[dir] = 0;
-      } else {
-        const avg = insights.reduce((sum, i) => sum + i.confidence, 0) / insights.length;
-        result[dir] = avg;
-      }
-    }
-    return result as Record<Direction, number>;
   }
 
   private computeBaseConfidence(
@@ -532,10 +512,14 @@ export class HybridStrategy implements DecompositionStrategy {
 
   private readonly keywordWeight: number;
   private readonly semanticWeight: number;
+  private readonly keywordStrategy: KeywordStrategy;
+  private readonly semanticStrategy: SemanticStrategy;
 
   constructor(options?: { keywordWeight?: number; semanticWeight?: number }) {
     this.keywordWeight = options?.keywordWeight ?? 0.35;
     this.semanticWeight = options?.semanticWeight ?? 0.65;
+    this.keywordStrategy = new KeywordStrategy();
+    this.semanticStrategy = new SemanticStrategy();
   }
 
   canHandle(resources: AvailableResources): boolean {
@@ -571,13 +555,10 @@ export class HybridStrategy implements DecompositionStrategy {
   async decompose(prompt: string, resources: AvailableResources): Promise<StrategyResult> {
     const startTime = Date.now();
 
-    const keywordStrategy = new KeywordStrategy();
-    const semanticStrategy = new SemanticStrategy();
-
     // Run both strategies concurrently
     const [keywordResult, semanticResult] = await Promise.all([
-      keywordStrategy.decompose(prompt, resources),
-      semanticStrategy.decompose(prompt, resources),
+      this.keywordStrategy.decompose(prompt, resources),
+      this.semanticStrategy.decompose(prompt, resources),
     ]);
 
     // Merge directional analyses
@@ -594,10 +575,6 @@ export class HybridStrategy implements DecompositionStrategy {
     );
 
     // Rebuild pipeline from merged data
-    const { DependencyMapper } = await import("./dependency_mapper.js");
-    const { ActionStackBuilder } = await import("./action_stack.js");
-    const { MedicineWheelBridge } = await import("./wheel_bridge.js");
-
     const mapper = new DependencyMapper();
     const builder = new ActionStackBuilder();
     const bridge = new MedicineWheelBridge();
@@ -889,15 +866,9 @@ export class ComplexityAnalyzer {
     ];
     const actionVerbCount = actionVerbs.filter((v) => lower.includes(v)).length;
 
-    // Check directional spread using DIRECTION_KEYWORDS keys
-    const directionKeywords: Record<string, string[]> = {
-      east: ["vision", "goal", "purpose", "want", "need", "objective", "create", "build", "design"],
-      south: ["learn", "research", "investigate", "understand", "analyze", "explore", "dependency"],
-      west: ["test", "verify", "validate", "check", "reflect", "review", "quality", "ethical"],
-      north: ["implement", "execute", "deploy", "run", "code", "install", "configure", "ship"],
-    };
+    // Check directional spread using canonical DIRECTION_KEYWORDS
     let directionalSpread = 0;
-    for (const keywords of Object.values(directionKeywords)) {
+    for (const keywords of Object.values(DIRECTION_KEYWORDS)) {
       if (keywords.some((k) => lower.includes(k))) {
         directionalSpread++;
       }
@@ -1044,12 +1015,34 @@ export class StrategySelector {
           reason: `Forced strategy: ${preferences.forceStrategy}`,
         };
       }
+      // Forced strategy not found — warn and fall through to auto-selection
+      const availableIds = Array.from(this.registry.keys()).join(", ");
+      const warning = `Forced strategy "${preferences.forceStrategy}" not found in registry (available: ${availableIds}); falling back to auto-selection.`;
+      // Continue to auto-selection below; the warning is included in the reason
+      const signals = this.complexityAnalyzer.analyze(prompt);
+      const autoResult = this.autoSelect(prompt, signals, resources, preferences);
+      return {
+        ...autoResult,
+        reason: `${warning} ${autoResult.reason}`,
+      };
     }
 
     // 2. Analyze prompt complexity
     const signals = this.complexityAnalyzer.analyze(prompt);
 
-    // 3. Filter to feasible strategies
+    return this.autoSelect(prompt, signals, resources, preferences);
+  }
+
+  /**
+   * Auto-select the best strategy based on complexity signals, resources, and preferences.
+   */
+  private autoSelect(
+    _prompt: string,
+    signals: ComplexitySignals,
+    resources: AvailableResources,
+    preferences?: StrategyPreferences
+  ): { strategy: DecompositionStrategy; signals: ComplexitySignals; reason: string } {
+    // Filter to feasible strategies
     const excluded = new Set(preferences?.excludeStrategies ?? []);
     const feasible: Array<{ strategy: DecompositionStrategy; score: number }> = [];
 
@@ -1363,6 +1356,16 @@ export class MultiPassDecomposer {
     const sorted = [...calibratedResults].sort(
       (a, b) => b.confidence - a.confidence
     );
+
+    if (sorted.length === 0) {
+      const failureDetails = failures
+        .map((f) => `${f.strategyId}: ${f.error instanceof Error ? f.error.message : String(f.error)}`)
+        .join("; ");
+      throw new Error(
+        `All decomposition strategies failed. No results to select from. Failures: ${failureDetails || "none registered"}`
+      );
+    }
+
     const best = sorted[0];
 
     // Detect disagreements as ambiguity signals
@@ -1436,6 +1439,16 @@ export class MultiPassDecomposer {
     }
 
     const sorted = [...allResults].sort((a, b) => b.confidence - a.confidence);
+
+    if (sorted.length === 0) {
+      const failureDetails = failures
+        .map((f) => `${f.strategyId}: ${f.error}`)
+        .join("; ");
+      throw new Error(
+        `All decomposition strategies failed. No results to select from. Failures: ${failureDetails || "none registered"}`
+      );
+    }
+
     const best = sorted[0];
     const disagreements = this.detectDisagreements(allResults);
 

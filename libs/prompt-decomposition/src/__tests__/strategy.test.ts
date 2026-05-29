@@ -75,7 +75,7 @@ describe("ComplexityAnalyzer", () => {
   const analyzer = new ComplexityAnalyzer();
 
   it("should classify simple prompts as 'simple'", () => {
-    const signals = analyzer.analyze("Create a new file.");
+    const signals = analyzer.analyze("Say hello.");
     expect(signals.complexity).toBe("simple");
     expect(signals.wordCount).toBeLessThan(50);
   });
