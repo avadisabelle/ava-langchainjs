@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@langchain/core': ^1.1.16
+  '@langchain/core': '>=0.1.0'
   protobufjs: ^7.2.5
   form-data: ^4.0.4
   tar: '>=7.5.4'
@@ -267,7 +267,7 @@ importers:
   libs/prompt-decomposition:
     dependencies:
       '@langchain/core':
-        specifier: ^1.1.16
+        specifier: '>=0.1.0'
         version: 1.1.48
       ava-langchain-relational-intelligence:
         specifier: '>=0.1.0'
@@ -301,7 +301,7 @@ importers:
   libs/relational-intelligence:
     dependencies:
       '@langchain/core':
-        specifier: ^1.1.16
+        specifier: '>=0.1.0'
         version: 1.1.48
       ava-langchain-narrative-tracing:
         specifier: '>=0.1.0'
@@ -2072,7 +2072,7 @@ packages:
     resolution: {integrity: sha512-I8zNi/8tVVhYzTtVmtRVtmPbaQyBTMTm8w+jL5R3RgImhJSkCXXAwRPInTjO7GNRVlRjMO5pSaf7+PeHruHKXA==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@langchain/core': ^1.1.16
+      '@langchain/core': '>=0.1.0'
       ava-langchain-prompt-decomposition: '>=0.1.0'
       ava-langchain-relational-intelligence: '>=0.1.0'
       langfuse: '>=3.0.0'
@@ -2090,7 +2090,7 @@ packages:
     resolution: {integrity: sha512-267B8c2IfIcamJFttQev1ltwtK/2feyscLo4SyS7q9+RJFBnPjNp2ud7LzXx7by9XrerPgEr5MRwG9usJG+IgQ==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@langchain/core': ^1.1.16
+      '@langchain/core': '>=0.1.0'
       ava-langchain-relational-intelligence: '>=0.1.0'
     peerDependenciesMeta:
       '@langchain/core':
@@ -2102,7 +2102,7 @@ packages:
     resolution: {integrity: sha512-fHr4ne5WovpGq8U1TDyHuAV6v1pgh4i7EigF47LYnCvxvQBBbGyOM9FaEVngsJ4l2j03oWDAk+7Uoxt+r+t36g==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@langchain/core': ^1.1.16
+      '@langchain/core': '>=0.1.0'
       ava-langchain-narrative-tracing: '>=0.1.0'
     peerDependenciesMeta:
       '@langchain/core':
