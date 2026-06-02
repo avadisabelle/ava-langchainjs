@@ -334,30 +334,29 @@ export class KeywordStrategy implements DecompositionStrategy {
 // =============================================================================
 
 /**
- * Uses an LLM for classification and structured extraction, providing
- * deeper semantic understanding of prompt intent and direction.
+ * Provides LLM-enhanced intent extraction with keyword-based directional analysis.
  *
  * Characteristics:
  * - Requires an LLM (will not be selected without one)
  * - Non-deterministic — LLM responses vary
  * - Higher latency (500ms-5s depending on model)
- * - Significantly better on ambiguous, multi-intent, and nuanced prompts
- * - Can understand context, metaphor, and implied requirements
+ * - Significantly better on ambiguous, multi-intent, and nuanced prompts for
+ *   intent extraction; can understand context, metaphor, and implied requirements
  *
  * Architecture:
- * 1. Sends the prompt to the LLM with a structured output schema
- *    requesting direction classification, intent extraction, and
- *    confidence scoring in a single call
- * 2. Falls back to keyword strategy if LLM call fails
- * 3. Uses the LLM's native understanding to classify segments rather
- *    than keyword matching
+ * 1. Uses IntentExtractor with the LLM enabled for richer intent extraction
+ * 2. Falls back to keyword-only extraction if LLM call fails
+ * 3. Directional analysis still uses the keyword-based DirectionalDecomposer —
+ *    true LLM directional classification is a future enhancement
+ * 4. Runs the rest of the pipeline (DependencyMapper, ActionStackBuilder,
+ *    MedicineWheelBridge) as normal
  *
- * The LLM prompt is grounded in Medicine Wheel epistemology, asking
- * the model to consider all four directions explicitly.
+ * The LLM call is grounded in Medicine Wheel epistemology, asking the model
+ * to consider all four directions explicitly when extracting intents.
  */
 export class SemanticStrategy implements DecompositionStrategy {
   readonly id: StrategyId = "semantic";
-  readonly name = "LLM-Based Semantic Decomposition";
+  readonly name = "LLM-Enhanced Intent Extraction with Keyword Directional Analysis";
 
   canHandle(resources: AvailableResources): boolean {
     // Requires an LLM
@@ -372,34 +371,18 @@ export class SemanticStrategy implements DecompositionStrategy {
   }
 
   /**
-   * Run LLM-based decomposition.
+   * Run LLM-enhanced intent extraction with keyword-based directional analysis.
    *
    * Implementation approach:
-   * 1. Use the LLM to classify each prompt segment into directions
-   *    with confidence scores, replacing keyword matching
-   * 2. Use IntentExtractor with the LLM enabled for structured extraction
-   * 3. The directional analysis comes from the LLM's classification,
-   *    not from DIRECTION_KEYWORDS
-   * 4. Run the rest of the pipeline (DependencyMapper, ActionStackBuilder,
+   * 1. Use IntentExtractor with the LLM enabled for richer intent extraction —
+   *    the LLM identifies implicit intents, understands context and metaphor,
+   *    and provides better-calibrated confidence scores
+   * 2. Directional analysis uses the keyword-based DirectionalDecomposer;
+   *    true LLM directional classification is a future enhancement
+   * 3. Run the rest of the pipeline (DependencyMapper, ActionStackBuilder,
    *    MedicineWheelBridge) as normal — those are direction-agnostic
    *
-   * The LLM system prompt instructs the model to:
-   * - Think in terms of the Four Directions (EAST/Vision, SOUTH/Analysis,
-   *   WEST/Validation, NORTH/Action)
-   * - Identify implicit intents that keyword matching would miss
-   * - Provide calibrated confidence scores
-   * - Flag ambiguities and hedging language
-   *
-   * Pseudocode for the LLM prompt:
-   * ```
-   * SYSTEM: You are a prompt decomposition engine grounded in Medicine Wheel
-   * epistemology. Analyze the following prompt through Four Directions...
-   * Return JSON matching the DirectionalAnalysis + IntentExtractionResult schemas.
-   *
-   * USER: <prompt>
-   * ```
-   *
-   * If the LLM call fails, this strategy falls back to KeywordStrategy
+   * If the LLM call fails, falls back to heuristic intent extraction
    * and marks the fallback in diagnostics.
    */
   async decompose(prompt: string, resources: AvailableResources): Promise<StrategyResult> {
@@ -490,11 +473,16 @@ export class SemanticStrategy implements DecompositionStrategy {
  * - Highest latency (~2x semantic strategy)
  * - Best for complex or high-stakes prompts where accuracy matters more than speed
  *
+ * Note: Both KeywordStrategy and SemanticStrategy currently use the same
+ * keyword-based DirectionalDecomposer for directional analysis, so the ensemble
+ * value is primarily in intent extraction (LLM-enhanced vs. heuristic). True
+ * divergence in directional analysis will require a future LLM-based directional
+ * classifier in SemanticStrategy.
+ *
  * Merging algorithm:
  * 1. Run KeywordStrategy and SemanticStrategy in parallel
- * 2. For directional analysis: use semantic classification as primary,
- *    keyword classification as validation. If they agree, boost confidence.
- *    If they disagree, flag the segment for review.
+ * 2. For directional analysis: union insights from both; shared insights get
+ *    confidence = weighted average. If they disagree, flag the segment for review.
  * 3. For intents: union the intent sets, deduplicating by target similarity.
  *    Shared intents get boosted confidence; strategy-unique intents are kept
  *    but marked with lower confidence.
@@ -771,12 +759,14 @@ export class HybridStrategy implements DecompositionStrategy {
   ): number {
     let bonus = 0;
 
-    // Same lead direction
+    // Both strategies use the same keyword-based DirectionalDecomposer, so
+    // directional agreement is expected rather than a genuine signal. Use a
+    // reduced bonus (0.02) to avoid over-crediting this.
     if (
       keyword.directionalAnalysis.leadDirection ===
       semantic.directionalAnalysis.leadDirection
     ) {
-      bonus += 0.05;
+      bonus += 0.02;
     }
 
     // Same primary action
@@ -1664,4 +1654,141 @@ export interface StrategicDecompositionResult {
   signals: ComplexitySignals;
   /** Multi-pass details, if multi-pass was used */
   multiPass?: MultiPassResult;
+}
+
+// =============================================================================
+// Strategy Metadata / Provenance Contract
+// =============================================================================
+
+/**
+ * Portable metadata extracted from a strategic decomposition result.
+ * This is the durable contract for downstream engine consumption
+ * (e.g. ava-langgraph-prompt-decomposition-engine, inquiry-routing-engine).
+ *
+ * Designed to be serializable and persistable alongside DecompositionResult
+ * without modifying the core DecompositionResult shape.
+ */
+export interface StrategyMetadata {
+  /** Which strategy produced this result */
+  strategyId: StrategyId;
+  /** Human-readable explanation of why this strategy was selected */
+  selectionReason: string;
+  /** Pre-decomposition complexity analysis */
+  complexity: {
+    level: PromptComplexity;
+    wordCount: number;
+    clauseCount: number;
+    conditionalCount: number;
+    hedgingCount: number;
+    directionalSpread: number;
+  };
+  /** Calibrated confidence scores */
+  confidence: {
+    overall: number;
+    perDirection: Record<string, number>;
+  };
+  /** Diagnostic trace from strategy execution and calibration */
+  diagnostics: string[];
+  /** Execution timing in milliseconds */
+  executionTimeMs: number;
+  /** Multi-pass details, if multi-pass was used */
+  multiPass?: {
+    totalPasses: number;
+    totalExecutionTimeMs: number;
+    disagreements: Array<{
+      aspect: string;
+      description: string;
+      severity: string;
+    }>;
+    failures: Array<{ strategyId: string; error: string }>;
+  };
+  /** ISO 8601 timestamp of when this decomposition was performed */
+  timestamp: string;
+}
+
+/**
+ * A combined result that pairs the core DecompositionResult with
+ * strategy provenance metadata, suitable for persistence and
+ * downstream engine consumption.
+ */
+export interface DecompositionWithProvenance {
+  /** The core decomposition result (unchanged shape) */
+  decomposition: DecompositionResult;
+  /** Strategy selection and execution metadata */
+  metadata: StrategyMetadata;
+  /** Optional Medicine Wheel enrichment */
+  wheelEnriched?: WheelEnrichedAnalysis;
+}
+
+/**
+ * Extract portable strategy metadata from a StrategicDecompositionResult.
+ * Use this to persist provenance alongside stored decomposition artifacts.
+ *
+ * @example
+ * ```typescript
+ * const strategic = await decomposer.decompose(prompt);
+ * const metadata = extractStrategyMetadata(strategic);
+ * await saveDecomposition(strategic.result.decomposition, outputDir);
+ * // Save metadata alongside for downstream engines
+ * ```
+ */
+export function extractStrategyMetadata(
+  result: StrategicDecompositionResult
+): StrategyMetadata {
+  return {
+    strategyId: result.result.strategyId,
+    selectionReason: result.selectionReason,
+    complexity: {
+      level: result.signals.complexity,
+      wordCount: result.signals.wordCount,
+      clauseCount: result.signals.clauseCount,
+      conditionalCount: result.signals.conditionalCount,
+      hedgingCount: result.signals.hedgingCount,
+      directionalSpread: result.signals.directionalSpread,
+    },
+    confidence: {
+      overall: result.result.confidence,
+      perDirection: { ...result.result.directionConfidence },
+    },
+    diagnostics: [...result.result.diagnostics],
+    executionTimeMs: result.result.executionTimeMs,
+    multiPass: result.multiPass
+      ? {
+          totalPasses: result.multiPass.allResults.length,
+          totalExecutionTimeMs: result.multiPass.totalExecutionTimeMs,
+          disagreements: result.multiPass.disagreements.map((d) => ({
+            aspect: d.aspect,
+            description: d.description,
+            severity: d.severity,
+          })),
+          failures: result.multiPass.failures.map((f) => ({
+            strategyId: f.strategyId,
+            error: f.error,
+          })),
+        }
+      : undefined,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Convert a StrategicDecompositionResult into a DecompositionWithProvenance,
+ * pairing the core result with durable metadata for downstream consumption.
+ *
+ * @example
+ * ```typescript
+ * const strategic = await decomposer.decompose(prompt);
+ * const withProvenance = strategicResultToProvenance(strategic);
+ * // withProvenance.decomposition is the standard DecompositionResult
+ * // withProvenance.metadata has strategy selection, complexity, confidence
+ * ```
+ */
+export function strategicResultToProvenance(
+  result: StrategicDecompositionResult
+): DecompositionWithProvenance {
+  return {
+    decomposition: result.result.decomposition,
+    metadata: extractStrategyMetadata(result),
+    wheelEnriched: result.result.wheelEnriched,
+  };
 }

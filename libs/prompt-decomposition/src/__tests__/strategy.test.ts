@@ -9,6 +9,8 @@ import {
   MultiPassDecomposer,
   ConfidenceCalibrator,
   StrategicDecomposer,
+  extractStrategyMetadata,
+  strategicResultToProvenance,
 } from "../strategy_spec.js";
 import type {
   AvailableResources,
@@ -850,5 +852,142 @@ describe("StrategicDecomposer", () => {
     expect(
       result.result.diagnostics.some((d) => d.includes("Calibrated:"))
     ).toBe(true);
+  });
+});
+
+// =============================================================================
+// extractStrategyMetadata
+// =============================================================================
+
+describe("extractStrategyMetadata", () => {
+  it("should extract all fields from a single-pass result", async () => {
+    const decomposer = new StrategicDecomposer();
+    const strategic = await decomposer.decompose("Create a new file.");
+
+    const metadata = extractStrategyMetadata(strategic);
+
+    expect(metadata.strategyId).toBe(strategic.result.strategyId);
+    expect(metadata.selectionReason).toBe(strategic.selectionReason);
+    expect(metadata.complexity.level).toBe(strategic.signals.complexity);
+    expect(metadata.complexity.wordCount).toBe(strategic.signals.wordCount);
+    expect(metadata.complexity.clauseCount).toBe(strategic.signals.clauseCount);
+    expect(metadata.complexity.conditionalCount).toBe(strategic.signals.conditionalCount);
+    expect(metadata.complexity.hedgingCount).toBe(strategic.signals.hedgingCount);
+    expect(metadata.complexity.directionalSpread).toBe(strategic.signals.directionalSpread);
+    expect(metadata.confidence.overall).toBe(strategic.result.confidence);
+    expect(metadata.confidence.perDirection).toBeDefined();
+    expect(Array.isArray(metadata.diagnostics)).toBe(true);
+    expect(typeof metadata.executionTimeMs).toBe("number");
+    expect(typeof metadata.timestamp).toBe("string");
+    // ISO 8601 timestamp
+    expect(() => new Date(metadata.timestamp)).not.toThrow();
+    // No multi-pass on simple single-pass
+    expect(metadata.multiPass).toBeUndefined();
+  });
+
+  it("should include per-direction confidence matching the result", async () => {
+    const decomposer = new StrategicDecomposer();
+    const strategic = await decomposer.decompose(
+      "Create a vision. Research the data. Validate assumptions. Execute the plan."
+    );
+
+    const metadata = extractStrategyMetadata(strategic);
+
+    for (const dir of ["east", "south", "west", "north"]) {
+      expect(typeof metadata.confidence.perDirection[dir]).toBe("number");
+    }
+  });
+
+  it("should include multi-pass info when multi-pass was used", async () => {
+    const decomposer = new StrategicDecomposer({
+      resources: { llm: createMockLLM() },
+      preferences: { alwaysMultiPass: true },
+    });
+    const strategic = await decomposer.decompose("Create a simple file.");
+
+    expect(strategic.multiPass).toBeDefined();
+    const metadata = extractStrategyMetadata(strategic);
+
+    expect(metadata.multiPass).toBeDefined();
+    expect(typeof metadata.multiPass!.totalPasses).toBe("number");
+    expect(typeof metadata.multiPass!.totalExecutionTimeMs).toBe("number");
+    expect(Array.isArray(metadata.multiPass!.disagreements)).toBe(true);
+    expect(Array.isArray(metadata.multiPass!.failures)).toBe(true);
+    // Disagreement shape
+    for (const d of metadata.multiPass!.disagreements) {
+      expect(typeof d.aspect).toBe("string");
+      expect(typeof d.description).toBe("string");
+      expect(typeof d.severity).toBe("string");
+    }
+  });
+
+  it("should produce a fresh timestamp on each call", async () => {
+    const decomposer = new StrategicDecomposer();
+    const strategic = await decomposer.decompose("Create a file.");
+
+    const before = Date.now();
+    const meta1 = extractStrategyMetadata(strategic);
+    const meta2 = extractStrategyMetadata(strategic);
+    const after = Date.now();
+
+    expect(new Date(meta1.timestamp).getTime()).toBeGreaterThanOrEqual(before);
+    expect(new Date(meta2.timestamp).getTime()).toBeLessThanOrEqual(after);
+  });
+});
+
+// =============================================================================
+// strategicResultToProvenance
+// =============================================================================
+
+describe("strategicResultToProvenance", () => {
+  it("should produce a correct DecompositionWithProvenance", async () => {
+    const decomposer = new StrategicDecomposer();
+    const strategic = await decomposer.decompose("Create a new module.");
+
+    const withProvenance = strategicResultToProvenance(strategic);
+
+    // decomposition is the core result
+    expect(withProvenance.decomposition).toBe(strategic.result.decomposition);
+    // metadata is populated
+    expect(withProvenance.metadata).toBeDefined();
+    expect(withProvenance.metadata.strategyId).toBe(strategic.result.strategyId);
+    // wheelEnriched is passed through
+    expect(withProvenance.wheelEnriched).toBe(strategic.result.wheelEnriched);
+  });
+
+  it("should include complete metadata in the provenance", async () => {
+    const decomposer = new StrategicDecomposer();
+    const strategic = await decomposer.decompose("Build and deploy a service.");
+
+    const withProvenance = strategicResultToProvenance(strategic);
+    const { metadata } = withProvenance;
+
+    expect(metadata.selectionReason).toBe(strategic.selectionReason);
+    expect(metadata.confidence.overall).toBe(strategic.result.confidence);
+    expect(metadata.complexity.level).toBe(strategic.signals.complexity);
+    expect(Array.isArray(metadata.diagnostics)).toBe(true);
+    expect(typeof metadata.timestamp).toBe("string");
+  });
+
+  it("should include multi-pass provenance when multi-pass was used", async () => {
+    const decomposer = new StrategicDecomposer({
+      resources: { llm: createMockLLM() },
+      preferences: { alwaysMultiPass: true },
+    });
+    const strategic = await decomposer.decompose("Create a new feature.");
+
+    const withProvenance = strategicResultToProvenance(strategic);
+
+    expect(withProvenance.metadata.multiPass).toBeDefined();
+    expect(withProvenance.metadata.multiPass!.totalPasses).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should not include multiPass in metadata when single-pass was used", async () => {
+    const decomposer = new StrategicDecomposer();
+    const strategic = await decomposer.decompose("Create a file.");
+
+    expect(strategic.multiPass).toBeUndefined();
+    const withProvenance = strategicResultToProvenance(strategic);
+    expect(withProvenance.metadata.multiPass).toBeUndefined();
   });
 });

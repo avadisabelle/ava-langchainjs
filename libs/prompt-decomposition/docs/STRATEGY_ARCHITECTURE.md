@@ -88,27 +88,23 @@ How it works:
 
 ### SemanticStrategy
 
-Uses an LLM for richer understanding. Requires `resources.llm`.
+Provides LLM-enhanced intent extraction with keyword-based directional analysis. Requires `resources.llm`.
 
 | Aspect | Detail |
 |--------|--------|
 | **Dependencies** | LLM instance |
 | **Latency** | 500ms-5s |
-| **Accuracy** | Significantly better on nuanced/ambiguous prompts |
-| **Determinism** | Non-deterministic (LLM variance) |
-| **Components** | IntentExtractor (LLM mode) + DirectionalDecomposer + DependencyMapper + ActionStackBuilder + MedicineWheelBridge |
+| **Accuracy** | Significantly better intent extraction on nuanced/ambiguous prompts |
+| **Determinism** | Non-deterministic (LLM variance on intent extraction) |
+| **Components** | IntentExtractor (LLM mode) + DirectionalDecomposer (keyword) + DependencyMapper + ActionStackBuilder + MedicineWheelBridge |
 
 How it works:
-1. Sends the prompt to the LLM with a structured output schema grounded in Four Directions epistemology
-2. The LLM classifies segments, identifies implicit intents, and provides calibrated confidence scores
-3. Falls back to KeywordStrategy if the LLM call fails
+1. Uses `IntentExtractor` with the LLM enabled — the LLM identifies implicit intents, understands context and metaphor, and provides better-calibrated confidence scores
+2. Directional analysis still uses the keyword-based `DirectionalDecomposer` (the same algorithm as `KeywordStrategy`)
+3. Falls back to heuristic intent extraction if the LLM call fails
 4. Rest of pipeline (dependency mapping, action stack) runs as normal
 
-The LLM prompt is designed to:
-- Think in terms of EAST/Vision, SOUTH/Analysis, WEST/Validation, NORTH/Action
-- Identify implicit requirements that keyword matching would miss
-- Detect hedging language and flag ambiguities
-- Provide structured JSON output matching the existing schemas
+> **Note:** True LLM directional classification (i.e., having the LLM classify prompt segments into directions rather than using keyword matching) is a future enhancement. A future `EmbeddingStrategy` or upgraded `SemanticStrategy` would provide this capability.
 
 ### HybridStrategy
 
@@ -118,9 +114,11 @@ Runs both keyword and semantic strategies, then merges results with weighted sco
 |--------|--------|
 | **Dependencies** | LLM instance |
 | **Latency** | ~same as semantic (parallel execution) |
-| **Accuracy** | Highest — ensemble approach |
+| **Accuracy** | Highest — ensemble approach, primarily via intent extraction diversity |
 | **Determinism** | Non-deterministic |
 | **Components** | KeywordStrategy + SemanticStrategy + merge logic |
+
+> **Note:** Because both `KeywordStrategy` and `SemanticStrategy` currently use the same keyword-based `DirectionalDecomposer` for directional analysis, the ensemble value is primarily in **intent extraction** (LLM-enhanced vs. heuristic). The directional agreement bonus is reduced accordingly (0.02 rather than the intent-based 0.05). True divergence in directional analysis — and thus fuller ensemble benefit — will come with a future LLM-based directional classifier.
 
 Merging algorithm:
 1. **Run both strategies concurrently** via `Promise.all`
@@ -343,3 +341,58 @@ The HybridStrategy's keyword/semantic weights (currently 0.35/0.65) could be lea
 ### Strategy Performance Tracking
 
 A `StrategyTracker` could record strategy selection, execution time, and outcome quality to improve the selection algorithm over time.
+
+## Strategy Metadata Contract for Downstream Consumers
+
+The `StrategyMetadata` interface and associated helpers provide a durable, serializable provenance contract for downstream engines (e.g. `ava-langgraph-prompt-decomposition-engine`, `inquiry-routing-engine`).
+
+### StrategyMetadata
+
+```typescript
+interface StrategyMetadata {
+  strategyId: StrategyId;            // which strategy produced this
+  selectionReason: string;           // why it was selected
+  complexity: {                      // pre-decomposition analysis
+    level: PromptComplexity;
+    wordCount: number;
+    clauseCount: number;
+    conditionalCount: number;
+    hedgingCount: number;
+    directionalSpread: number;
+  };
+  confidence: {
+    overall: number;                 // calibrated overall confidence
+    perDirection: Record<string, number>;
+  };
+  diagnostics: string[];             // full calibration trace
+  executionTimeMs: number;
+  multiPass?: { ... };               // present only if multi-pass was used
+  timestamp: string;                 // ISO 8601
+}
+```
+
+### DecompositionWithProvenance
+
+Pairs the core `DecompositionResult` (unchanged shape) with `StrategyMetadata` for storage:
+
+```typescript
+interface DecompositionWithProvenance {
+  decomposition: DecompositionResult;  // standard result — unchanged
+  metadata: StrategyMetadata;          // provenance for downstream
+  wheelEnriched?: WheelEnrichedAnalysis;
+}
+```
+
+### Utility Functions
+
+Two functions extract provenance from a `StrategicDecompositionResult`:
+
+```typescript
+// Extract just the metadata (e.g., to persist alongside a stored artifact)
+const metadata = extractStrategyMetadata(strategicResult);
+
+// Wrap decomposition + metadata together for downstream handoff
+const withProvenance = strategicResultToProvenance(strategicResult);
+```
+
+These are designed so that `DecompositionResult` remains the stable core contract and metadata is additive — existing consumers of `DecompositionResult` require no changes.

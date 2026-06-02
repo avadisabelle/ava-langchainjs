@@ -229,6 +229,8 @@ export {
   MultiPassDecomposer,
   ConfidenceCalibrator,
   StrategicDecomposer,
+  extractStrategyMetadata,
+  strategicResultToProvenance,
 } from "./strategy_spec.js";
 
 export type {
@@ -242,6 +244,8 @@ export type {
   Disagreement,
   MultiPassResult,
   StrategicDecompositionResult,
+  StrategyMetadata,
+  DecompositionWithProvenance,
 } from "./strategy_spec.js";
 
 // =============================================================================
