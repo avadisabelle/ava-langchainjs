@@ -350,6 +350,7 @@ The `StrategyMetadata` interface and associated helpers provide a durable, seria
 
 ```typescript
 interface StrategyMetadata {
+  schemaVersion: 1;                  // portable metadata contract version
   strategyId: StrategyId;            // which strategy produced this
   selectionReason: string;           // why it was selected
   complexity: {                      // pre-decomposition analysis
@@ -358,7 +359,10 @@ interface StrategyMetadata {
     clauseCount: number;
     conditionalCount: number;
     hedgingCount: number;
+    actionVerbCount: number;
     directionalSpread: number;
+    hasTechnicalReferences: boolean;
+    hasNestedStructure: boolean;
   };
   confidence: {
     overall: number;                 // calibrated overall confidence
@@ -393,6 +397,11 @@ const metadata = extractStrategyMetadata(strategicResult);
 
 // Wrap decomposition + metadata together for downstream handoff
 const withProvenance = strategicResultToProvenance(strategicResult);
+
+// Persist the core result and strategy metadata together
+const stored = saveStrategicDecomposition(workdir, strategicResult, {
+  layout: "tree",
+});
 ```
 
-These are designed so that `DecompositionResult` remains the stable core contract and metadata is additive — existing consumers of `DecompositionResult` require no changes.
+These are designed so that `DecompositionResult` remains the stable core contract and metadata is additive. The metadata timestamp is the decomposition timestamp, so repeated extraction and persistence remain stable.

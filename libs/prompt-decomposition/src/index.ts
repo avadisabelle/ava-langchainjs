@@ -144,6 +144,7 @@ export {
   DecompositionMarkdownOptions,
   saveDecomposition,
   saveDecompositionTree,
+  saveStrategicDecomposition,
   loadDecomposition,
   listDecompositions,
   decompositionToMarkdown,
@@ -229,8 +230,10 @@ export {
   MultiPassDecomposer,
   ConfidenceCalibrator,
   StrategicDecomposer,
+  strategicDecompose,
   extractStrategyMetadata,
   strategicResultToProvenance,
+  STRATEGY_METADATA_SCHEMA_VERSION,
 } from "./strategy_spec.js";
 
 export type {
@@ -243,6 +246,7 @@ export type {
   DecompositionStrategy,
   Disagreement,
   MultiPassResult,
+  StrategicDecomposerOptions,
   StrategicDecompositionResult,
   StrategyMetadata,
   DecompositionWithProvenance,

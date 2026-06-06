@@ -9,6 +9,7 @@ import {
   MultiPassDecomposer,
   ConfidenceCalibrator,
   StrategicDecomposer,
+  strategicDecompose,
   extractStrategyMetadata,
   strategicResultToProvenance,
 } from "../strategy_spec.js";
@@ -866,6 +867,7 @@ describe("extractStrategyMetadata", () => {
 
     const metadata = extractStrategyMetadata(strategic);
 
+    expect(metadata.schemaVersion).toBe(1);
     expect(metadata.strategyId).toBe(strategic.result.strategyId);
     expect(metadata.selectionReason).toBe(strategic.selectionReason);
     expect(metadata.complexity.level).toBe(strategic.signals.complexity);
@@ -873,7 +875,14 @@ describe("extractStrategyMetadata", () => {
     expect(metadata.complexity.clauseCount).toBe(strategic.signals.clauseCount);
     expect(metadata.complexity.conditionalCount).toBe(strategic.signals.conditionalCount);
     expect(metadata.complexity.hedgingCount).toBe(strategic.signals.hedgingCount);
+    expect(metadata.complexity.actionVerbCount).toBe(strategic.signals.actionVerbCount);
     expect(metadata.complexity.directionalSpread).toBe(strategic.signals.directionalSpread);
+    expect(metadata.complexity.hasTechnicalReferences).toBe(
+      strategic.signals.hasTechnicalReferences
+    );
+    expect(metadata.complexity.hasNestedStructure).toBe(
+      strategic.signals.hasNestedStructure
+    );
     expect(metadata.confidence.overall).toBe(strategic.result.confidence);
     expect(metadata.confidence.perDirection).toBeDefined();
     expect(Array.isArray(metadata.diagnostics)).toBe(true);
@@ -917,21 +926,29 @@ describe("extractStrategyMetadata", () => {
     for (const d of metadata.multiPass!.disagreements) {
       expect(typeof d.aspect).toBe("string");
       expect(typeof d.description).toBe("string");
+      expect(typeof d.strategyValues).toBe("object");
       expect(typeof d.severity).toBe("string");
     }
   });
 
-  it("should produce a fresh timestamp on each call", async () => {
+  it("should retain the decomposition timestamp on each call", async () => {
     const decomposer = new StrategicDecomposer();
     const strategic = await decomposer.decompose("Create a file.");
 
-    const before = Date.now();
     const meta1 = extractStrategyMetadata(strategic);
     const meta2 = extractStrategyMetadata(strategic);
-    const after = Date.now();
 
-    expect(new Date(meta1.timestamp).getTime()).toBeGreaterThanOrEqual(before);
-    expect(new Date(meta2.timestamp).getTime()).toBeLessThanOrEqual(after);
+    expect(meta1.timestamp).toBe(strategic.result.decomposition.timestamp);
+    expect(meta2.timestamp).toBe(meta1.timestamp);
+  });
+});
+
+describe("strategicDecompose", () => {
+  it("provides a one-off strategy-aware entry point", async () => {
+    const result = await strategicDecompose("Create a file.");
+
+    expect(result.result.strategyId).toBe("keyword");
+    expect(result.result.decomposition.prompt).toBe("Create a file.");
   });
 });
 

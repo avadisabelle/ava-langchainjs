@@ -67,12 +67,13 @@ console.log(strategic.selectionReason);     // explains why
 const metadata = extractStrategyMetadata(strategic);
 
 console.log(metadata.strategyId);           // "semantic"
+console.log(metadata.schemaVersion);        // 1
 console.log(metadata.complexity.level);     // "ambiguous"
 console.log(metadata.complexity.hedgingCount); // 2 (maybe, perhaps)
 console.log(metadata.confidence.overall);   // calibrated overall score
 console.log(metadata.confidence.perDirection); // { east: 0.4, south: 0.7, … }
 console.log(metadata.diagnostics);          // calibration trace strings
-console.log(metadata.timestamp);            // ISO 8601 e.g. "2025-07-14T12:00:00.000Z"
+console.log(metadata.timestamp);            // stable decomposition timestamp
 ```
 
 **What's happening:** `ComplexityAnalyzer` detects hedging language and classifies the prompt as `"ambiguous"`. `StrategySelector` scores `semantic` or `hybrid` highest because an LLM is available and accuracy matters more for ambiguous prompts. `SemanticStrategy` uses `IntentExtractor` with the LLM for richer intent extraction (directional analysis is still keyword-based). `ConfidenceCalibrator` normalizes the score.
@@ -157,6 +158,7 @@ await sendToDownstreamEngine(withProvenance);
 withProvenance.decomposition           → DecompositionResult (unchanged core contract)
 withProvenance.metadata                → StrategyMetadata
   .strategyId                          → StrategyId
+  .schemaVersion                       → 1
   .selectionReason                     → string
   .complexity                          → { level, wordCount, … }
   .confidence                          → { overall, perDirection }

@@ -13,7 +13,7 @@
  *   The strategy layer wraps the existing Decompose → Extract → Map → Build → Enrich
  *   pipeline. Each strategy may use the existing components differently:
  *   - KeywordStrategy: Uses DirectionalDecomposer + heuristic IntentExtractor (existing code)
- *   - SemanticStrategy: Uses LLM-based classification + structured output extraction
+ *   - SemanticStrategy: Uses keyword direction analysis + LLM-enhanced intent extraction
  *   - HybridStrategy: Runs both, merges with weighted scoring
  *
  * The StrategySelector sits *before* the pipeline, and the ConfidenceCalibrator
@@ -1577,11 +1577,7 @@ export class StrategicDecomposer {
   private readonly resources: AvailableResources;
   private readonly preferences: StrategyPreferences;
 
-  constructor(options?: {
-    resources?: AvailableResources;
-    preferences?: StrategyPreferences;
-    strategies?: DecompositionStrategy[];
-  }) {
+  constructor(options?: StrategicDecomposerOptions) {
     this.resources = options?.resources ?? {};
     this.preferences = options?.preferences ?? {};
     this.selector = new StrategySelector(options?.strategies);
@@ -1642,6 +1638,26 @@ export class StrategicDecomposer {
 }
 
 /**
+ * Runtime resources, selection preferences, and optional custom strategies
+ * accepted by the strategy-aware decomposition API.
+ */
+export interface StrategicDecomposerOptions {
+  resources?: AvailableResources;
+  preferences?: StrategyPreferences;
+  strategies?: DecompositionStrategy[];
+}
+
+/**
+ * Convenience entry point for one-off strategy-aware decompositions.
+ */
+export async function strategicDecompose(
+  prompt: string,
+  options?: StrategicDecomposerOptions
+): Promise<StrategicDecompositionResult> {
+  return new StrategicDecomposer(options).decompose(prompt);
+}
+
+/**
  * The output of StrategicDecomposer, containing the decomposition
  * result plus metadata about strategy selection and confidence calibration.
  */
@@ -1660,6 +1676,8 @@ export interface StrategicDecompositionResult {
 // Strategy Metadata / Provenance Contract
 // =============================================================================
 
+export const STRATEGY_METADATA_SCHEMA_VERSION = 1;
+
 /**
  * Portable metadata extracted from a strategic decomposition result.
  * This is the durable contract for downstream engine consumption
@@ -1669,6 +1687,8 @@ export interface StrategicDecompositionResult {
  * without modifying the core DecompositionResult shape.
  */
 export interface StrategyMetadata {
+  /** Version of this portable metadata contract */
+  schemaVersion: typeof STRATEGY_METADATA_SCHEMA_VERSION;
   /** Which strategy produced this result */
   strategyId: StrategyId;
   /** Human-readable explanation of why this strategy was selected */
@@ -1680,7 +1700,10 @@ export interface StrategyMetadata {
     clauseCount: number;
     conditionalCount: number;
     hedgingCount: number;
+    actionVerbCount: number;
     directionalSpread: number;
+    hasTechnicalReferences: boolean;
+    hasNestedStructure: boolean;
   };
   /** Calibrated confidence scores */
   confidence: {
@@ -1698,7 +1721,8 @@ export interface StrategyMetadata {
     disagreements: Array<{
       aspect: string;
       description: string;
-      severity: string;
+      strategyValues: Record<string, string>;
+      severity: Disagreement["severity"];
     }>;
     failures: Array<{ strategyId: string; error: string }>;
   };
@@ -1736,6 +1760,7 @@ export function extractStrategyMetadata(
   result: StrategicDecompositionResult
 ): StrategyMetadata {
   return {
+    schemaVersion: STRATEGY_METADATA_SCHEMA_VERSION,
     strategyId: result.result.strategyId,
     selectionReason: result.selectionReason,
     complexity: {
@@ -1744,7 +1769,10 @@ export function extractStrategyMetadata(
       clauseCount: result.signals.clauseCount,
       conditionalCount: result.signals.conditionalCount,
       hedgingCount: result.signals.hedgingCount,
+      actionVerbCount: result.signals.actionVerbCount,
       directionalSpread: result.signals.directionalSpread,
+      hasTechnicalReferences: result.signals.hasTechnicalReferences,
+      hasNestedStructure: result.signals.hasNestedStructure,
     },
     confidence: {
       overall: result.result.confidence,
@@ -1759,6 +1787,7 @@ export function extractStrategyMetadata(
           disagreements: result.multiPass.disagreements.map((d) => ({
             aspect: d.aspect,
             description: d.description,
+            strategyValues: { ...d.strategyValues },
             severity: d.severity,
           })),
           failures: result.multiPass.failures.map((f) => ({
@@ -1767,7 +1796,7 @@ export function extractStrategyMetadata(
           })),
         }
       : undefined,
-    timestamp: new Date().toISOString(),
+    timestamp: result.result.decomposition.timestamp,
   };
 }
 
