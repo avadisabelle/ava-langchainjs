@@ -34,7 +34,8 @@
     "test:standard:int": "turbo test:standard:int",
     "test:standard": "pnpm test:standard:unit && pnpm test:standard:int",
     "changeset": "changeset",
-    "changeset:version": "changeset version"
+    "changeset:version": "changeset version",
+    "check:dts": "node scripts/check-dts.mjs"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
