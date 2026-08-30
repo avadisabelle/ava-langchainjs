@@ -24,6 +24,7 @@
     "precommit": "turbo precommit",
     "prerelease": "BUILD_MODE=prerelease pnpm build",
     "release": "changeset publish",
+    "release:all": "bash ./release.sh",
     "test": "pnpm test:unit && pnpm test:exports:docker",
     "test:bench": "turbo test:bench",
     "test:unit": "turbo test --filter='!test-exports-*' --filter=!examples --filter=!create-langchain-integration",
