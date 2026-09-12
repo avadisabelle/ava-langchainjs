@@ -95,6 +95,11 @@ for dir in "${PACKAGES[@]}"; do
   pnpm --dir "$dir" build
 done
 
+step "Test all packages"
+for dir in "${PACKAGES[@]}"; do
+  pnpm --dir "$dir" test
+done
+
 step "Verify package contents"
 if [[ -f scripts/check-dts.mjs ]]; then
   node scripts/check-dts.mjs "${PACKAGES[@]}"
