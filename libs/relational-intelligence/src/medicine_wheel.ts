@@ -11,8 +11,28 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import { BaseChatModel, BaseLLM } from "@langchain/core/language_models/base";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { BaseLLM } from "@langchain/core/language_models/llms";
 import { z } from "zod";
+
+function contentToString(content: unknown): string {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((part) => {
+      if (typeof part === "string") return part;
+      if (
+        part &&
+        typeof part === "object" &&
+        "text" in part &&
+        typeof part.text === "string"
+      ) {
+        return part.text;
+      }
+      return "";
+    })
+    .join("");
+}
 
 /**
  * The four quadrants of the Medicine Wheel.
@@ -315,7 +335,10 @@ Ensure the JSON is perfectly valid and can be directly parsed. Do not include an
       ["human", `Content to assess: "${content}"`],
     ]);
 
-    const resContent = typeof response === "string" ? response : response.content;
+    const resContent =
+      typeof response === "string"
+        ? response
+        : contentToString(response.content);
 
     let parsedResult;
     try {

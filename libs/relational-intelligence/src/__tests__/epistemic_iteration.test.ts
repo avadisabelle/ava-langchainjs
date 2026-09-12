@@ -5,7 +5,7 @@ import {
   SpiralShiftType,
   SpiralTracker,
 } from "../epistemic_iteration.js";
-import { BaseChatModel } from "@langchain/core/language_models/base";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 describe("createEpistemicCircle", () => {
   it("creates a circle with defaults", () => {

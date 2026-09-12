@@ -25,13 +25,60 @@ import {
   ImportanceStore,
   calculateRelationalCompleteness,
 } from "./importance_unit.js";
-import { SpiralTracker, Spiral } from "./epistemic_iteration.js";
-import { ValueGate, GateVerdict, GateContext } from "./value_gate.js";
-import { DirectionalDecomposer, IntentExtractor } from "../../prompt-decomposition/src/index.js"; // From PDE
 import {
-  PromptDecompositionBridge,
-  RelationalIntelligenceBridge,
-} from "../../narrative-tracing/src/adapters/index.js"; // From Narrative Tracing
+  SpiralTracker,
+  Spiral,
+  EpistemicCircle,
+} from "./epistemic_iteration.js";
+import { ValueGate, GateVerdict, GateContext } from "./value_gate.js";
+import {
+  DirectionalDecomposer,
+  IntentExtractor,
+} from "ava-langchain-prompt-decomposition";
+
+export interface PromptDecompositionTracer {
+  logDecompositionStart(prompt: string, parentSpanId?: string): string;
+  logDirectionalAnalysis(
+    analysis: ReturnType<DirectionalDecomposer["decompose"]>,
+    parentSpanId?: string
+  ): string;
+  logIntentExtraction(
+    result: Awaited<ReturnType<IntentExtractor["extract"]>>,
+    parentSpanId?: string
+  ): string;
+  logAmbiguityDetected(ambiguities: string[], parentSpanId?: string): string;
+}
+
+export interface RelationalIntelligenceTracer {
+  logWheelAssessmentPerformed(
+    assessment: WheelAssessment,
+    parentSpanId?: string
+  ): string;
+  logImportanceUnitCreated(
+    unit: ImportanceUnit,
+    parentSpanId?: string
+  ): string;
+  logSpiralCircleRecorded(
+    circle: EpistemicCircle,
+    parentSpanId?: string
+  ): string;
+  logValueGateVerdictIssued(
+    verdict: GateVerdict,
+    parentSpanId?: string
+  ): string;
+  logRelationalMilestoneRecorded(
+    milestone: RelationalMilestone,
+    parentSpanId?: string
+  ): string;
+  logHumanEngagementRequested(
+    request: HumanEngagementRequest,
+    parentSpanId?: string
+  ): string;
+  logHumanEngagementResolved(
+    requestId: string,
+    parentSpanId?: string
+  ): string;
+}
 
 /**
  * A report from a sub-agent to the Fire Keeper.
@@ -170,8 +217,8 @@ export interface FireKeeperOptions {
   valueGate?: ValueGate;
   promptDecomposer?: DirectionalDecomposer; // Optional PDE integration
   intentExtractor?: IntentExtractor; // Optional PDE integration
-  promptDecompositionBridge?: PromptDecompositionBridge; // Optional tracing
-  relationalIntelligenceBridge?: RelationalIntelligenceBridge; // Optional tracing
+  promptDecompositionBridge?: PromptDecompositionTracer; // Optional tracing
+  relationalIntelligenceBridge?: RelationalIntelligenceTracer; // Optional tracing
 }
 
 /**
@@ -212,8 +259,8 @@ export class FireKeeper {
   private valueGate: ValueGate;
   private promptDecomposer?: DirectionalDecomposer;
   private intentExtractor?: IntentExtractor;
-  private promptDecompositionBridge?: PromptDecompositionBridge;
-  private relationalIntelligenceBridge?: RelationalIntelligenceBridge;
+  private promptDecompositionBridge?: PromptDecompositionTracer;
+  private relationalIntelligenceBridge?: RelationalIntelligenceTracer;
 
   private state: FireKeeperState;
 

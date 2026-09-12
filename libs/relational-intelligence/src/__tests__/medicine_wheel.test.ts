@@ -7,7 +7,7 @@ import {
   QUADRANT_KEYWORDS,
   QuadrantPresence,
 } from "../medicine_wheel.js";
-import { BaseChatModel } from "@langchain/core/language_models/base";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 describe("MedicineWheelQuadrant", () => {
   it("has four quadrants", () => {

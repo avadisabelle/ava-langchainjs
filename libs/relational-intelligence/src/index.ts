@@ -138,6 +138,9 @@ export {
   EngagementMode,
   HumanEngagementRequest,
   FireKeeperState,
+  FireKeeperOptions,
+  PromptDecompositionTracer,
+  RelationalIntelligenceTracer,
   FireKeeper,
 } from "./fire_keeper.js";
 
