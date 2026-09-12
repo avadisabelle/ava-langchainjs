@@ -177,14 +177,18 @@ export {
 // bundling prompt-decomposition source into this package's dist (which would
 // break instanceof checks and cause duplicate class registration).
 // Fixes: avadisabelle/ava-langchainjs#10
+// Types are re-exported with `export type`: the build keeps this statement
+// verbatim, and ESM consumers fail on names that have no runtime value.
 export {
   Direction,
-  DirectionalAnalysis,
-  DirectionalInsight,
   DirectionalDecomposer,
   IntentExtractor,
+  Urgency,
+} from "ava-langchain-prompt-decomposition";
+export type {
+  DirectionalAnalysis,
+  DirectionalInsight,
   IntentExtractionResult,
   SecondaryIntent,
   PrimaryIntent,
-  Urgency,
 } from "ava-langchain-prompt-decomposition";
