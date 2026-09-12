@@ -25,6 +25,8 @@ import {
   RelationalMilestone,
   EpistemicCircle,
   SpiralShiftAnalysis,
+  SpiralShiftType,
+  MedicineWheelQuadrant,
   LiminalInput,
   LiminalMode,
 } from "../../../relational-intelligence/src/index.js";
