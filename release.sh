@@ -109,6 +109,21 @@ else
   done
 fi
 
+step "Load built entry points"
+for dir in "${PACKAGES[@]}"; do
+  node --input-type=module -e '
+    import { createRequire } from "node:module";
+    import { pathToFileURL } from "node:url";
+    const dir = process.argv[1];
+    const require = createRequire(`${dir}/package.json`);
+    const pkg = require("./package.json");
+    const entry = pkg.exports?.["."] ?? {};
+    await import(pathToFileURL(`${dir}/${entry.import ?? pkg.main}`).href);
+    if (entry.require) require(`./${entry.require}`);
+    console.log(`  ${pkg.name}: ${entry.require ? "ESM and CJS" : "ESM"} entry points load`);
+  ' "$ROOT/$dir"
+done
+
 publish_package() {
   local dir="$1" name version
   name="$(node -p "require('./$dir/package.json').name")"
