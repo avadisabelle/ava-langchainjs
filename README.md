@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> **🌿 The AvaLangStack moved home to [avadisabelle/avalangstack](https://github.com/avadisabelle/avalangstack).** The five `ava-langchain-*` libraries below now live beside the graph engines under [`@avalangstack/`](https://github.com/avadisabelle/avalangstack/tree/main/@avalangstack), and they keep publishing under the same npm names. This repository is archived: come here for history, build in the new home.
+> **🌿 The AvaLangStack moved home to [avadisabelle/avalangstack](https://github.com/avadisabelle/avalangstack).** The five `ava-langchain-*` libraries below now live in [`chains/`](https://github.com/avadisabelle/avalangstack/tree/main/chains), beside the graph engines that consume them, and they keep publishing under the same npm names. This repository is archived: come here for history, build in the new home.
 
 # 🌿 AvaLangStack — Narrative Intelligence Ecosystem
 
