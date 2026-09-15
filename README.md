@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **🌿 The AvaLangStack moved home to [avadisabelle/avalangstack](https://github.com/avadisabelle/avalangstack).** The five `ava-langchain-*` libraries below now live beside the graph engines under [`@avalangstack/`](https://github.com/avadisabelle/avalangstack/tree/main/@avalangstack), and they keep publishing under the same npm names. This repository is archived: come here for history, build in the new home.
+
 # 🌿 AvaLangStack — Narrative Intelligence Ecosystem
 
 ![npm](https://img.shields.io/npm/dm/langchain) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/langchain.svg?style=social&label=Follow%20%40LangChain)](https://x.com/langchain)
